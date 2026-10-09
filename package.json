@@ -1,0 +1,16 @@
+{
+  "name": "pedestrian-safety-game",
+  "version": "1.0.0",
+  "description": "Pedestrian Safety Crosswalk Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "game",
+    "pedestrian-safety",
+    "crosswalk"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Safe Steps: City Walk - Pedestrian Safety Adventure</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-console-wrapper">
+    <div id="game-cabinet">
+      <!-- Visible Game Screen Box (In the middle of the screen) -->
+      <div id="game-screen-box">
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Top Right Controls (Info Guide & Sound) -->
+        <div id="game-hud" class="hud-layer">
+          <button id="info-btn" class="hud-btn" title="How to Play & Safety Guide">
+            ℹ️
+          </button>
+          <button id="sound-toggle-btn" class="hud-btn" title="Toggle Sound">
+            🔊
+          </button>
+        </div>
+
+    <!-- On-Screen Walking Direction Buttons -->
+    <div id="walking-controls" class="walking-controls hidden">
+      <button id="btn-walk-forward" class="walk-ctrl-btn forward" title="Walk Forward (Up / W)">
+        <span class="ctrl-icon">⬆️</span>
+        <span class="ctrl-title">FORWARD</span>
+        <span class="ctrl-shortcut">W / ↑</span>
+      </button>
+      <button id="btn-walk-backward" class="walk-ctrl-btn backward" title="Walk Backward (Down / S)">
+        <span class="ctrl-icon">⬇️</span>
+        <span class="ctrl-title">BACKWARD</span>
+        <span class="ctrl-shortcut">S / ↓</span>
+      </button>
+    </div>
+
+    <!-- Start Menu Screen Overlay -->
+    <div id="start-menu" class="screen-overlay">
+      <div class="menu-card animate-pop">
+        <div class="title-badge">🚦 PEDESTRIAN SAFETY ADVENTURE</div>
+        <h1 class="game-title">Safe Steps<br><span class="subtitle">City Walk!</span></h1>
+        <p class="menu-desc">Help your character walk safely through the city to reach their fun destination!</p>
+
+        <!-- Character Selection -->
+        <div class="character-select-section">
+          <h3>Choose Your Explorer:</h3>
+          <div class="character-options">
+            <button class="char-card selected" data-char="boy" id="select-boy">
+              <div class="char-avatar-preview boy-avatar">
+                <img src="assets/characters/boy/face.png" alt="Leo (Boy)" class="char-img-preview">
+              </div>
+              <span class="char-name">Leo (Boy)</span>
+            </button>
+
+            <button class="char-card" data-char="girl" id="select-girl">
+              <div class="char-avatar-preview girl-avatar">
+                <img src="assets/characters/girl/face.png" alt="Maya (Girl)" class="char-img-preview">
+              </div>
+              <span class="char-name">Maya (Girl)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Destination Selection Preview -->
+        <div class="destination-select-section">
+          <div class="destination-card">
+            <span class="dest-badge">Today's Destination</span>
+            <div class="dest-info">
+              <span id="menu-dest-icon" class="dest-icon">🧁</span>
+              <div>
+                <strong id="menu-dest-title">Sweet Treat Bakery</strong>
+                <p id="menu-dest-desc">A delicious snack is waiting across town!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="start-game-btn" class="big-action-btn pulse-glow">
+          <span>START WALKING!</span> 🚶💨
+        </button>
+      </div>
+    </div>
+
+    <!-- Picture-Based Pedestrian Signal Decision Modal -->
+    <div id="challenge-modal" class="screen-overlay hidden">
+      <div class="signal-challenge-card animate-scale">
+        <!-- Visual Signal Display Unit using user signal images -->
+        <div class="pedestrian-signal-display">
+          <div class="signal-frame-wrapper">
+            <img id="signal-display-img" src="assets/ui/signals/signal-stop-hand.png" alt="Pedestrian Crossing Signal" class="signal-display-img">
+          </div>
+        </div>
+
+        <!-- Big Picture-Based Choice Action Buttons (For kids who can't read) -->
+        <div class="picture-actions-grid">
+          <!-- Button 1: STAY (Red) -->
+          <button class="action-choice-btn btn-stay" id="btn-choice-stay">
+            <div class="btn-visual-icon">
+              <span class="choice-symbol">🛑</span>
+              <span class="choice-figure">🧍</span>
+            </div>
+            <span class="choice-title">STAY</span>
+            <span class="choice-subtext">Wait on Sidewalk</span>
+          </button>
+
+          <!-- Button 2: WALK (Green) -->
+          <button class="action-choice-btn btn-walk" id="btn-choice-walk">
+            <div class="btn-visual-icon">
+              <span class="choice-symbol">🟢</span>
+              <span class="choice-figure">🚶</span>
+            </div>
+            <span class="choice-title">WALK</span>
+            <span class="choice-subtext">Cross Crosswalk</span>
+          </button>
+        </div>
+
+        <!-- Visual Feedback Indicator -->
+        <div id="visual-feedback-box" class="visual-feedback hidden">
+          <span id="feedback-symbol" class="feedback-large-symbol">⭐</span>
+          <div id="feedback-msg-text" class="feedback-msg">Good Job!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory / Destination Reached Screen -->
+    <div id="victory-modal" class="screen-overlay hidden">
+      <div class="victory-card animate-bounce">
+        <div class="victory-confetti-banner">🎉 YOU ARRIVED SAFELY! 🎉</div>
+        <div class="victory-icon" id="victory-dest-icon">🧁</div>
+        <h2 class="victory-title" id="victory-title">Welcome to the Bakery!</h2>
+        <p class="victory-sub" id="victory-sub">You made safe choices every step of the way.</p>
+
+        <div class="victory-stats-card">
+          <div class="stat-box">
+            <span class="stat-num" id="stat-stars">5 / 5</span>
+            <span class="stat-label">Stars Earned ⭐</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-challenges">5</span>
+            <span class="stat-label">Safe Crossings 🚸</span>
+          </div>
+        </div>
+
+        <div class="badge-award">
+          <div class="medal-icon">🏅</div>
+          <div class="medal-text">
+            <strong>Certified Junior Pedestrian Safety Hero</strong>
+            <span>Mastered signals, crosswalks & city awareness!</span>
+          </div>
+        </div>
+
+        <button id="play-again-btn" class="big-action-btn pulse-glow">
+          <span>WALK ANOTHER ROUTE!</span> 🔄
+        </button>
+      </div> <!-- /#victory-card -->
+    </div> <!-- /#victory-modal -->
+
+    <!-- Info Page Modal (Game Mechanics, Signal Guide, Cybertruck Secret & Challenges) -->
+    <div id="info-modal" class="screen-overlay hidden">
+      <div class="info-card animate-pop">
+        <button id="btn-close-info" class="modal-close-x" title="Close Guide">✕</button>
+
+        <div class="info-header">
+          <div class="title-badge">📖 HOW TO PLAY & SECRETS</div>
+          <h2 class="info-main-title">Pedestrian Safety Guide</h2>
+          <p class="info-subtitle">Learn the crosswalk rules, how signals work, and the secret Cybertruck!</p>
+        </div>
+
+        <div class="info-content-scroll">
+          <!-- Section 1: Game Mechanics -->
+          <div class="info-section">
+            <h3 class="section-title"><span>🎮</span> Simple Game Mechanics</h3>
+            <div class="info-mechanics-grid">
+              <div class="mechanic-item">
+                <div class="mechanic-icon-box">
+                  <img src="assets/characters/boy/face.png" alt="Leo" class="mechanic-avatar">
+                  <img src="assets/characters/girl/face.png" alt="Maya" class="mechanic-avatar">
+                </div>
+                <div class="mechanic-text">
+                  <strong>Move in All Directions (Mouse & Keys)</strong>
+                  <p><strong>Click & hold anywhere on screen</strong> to have your explorer smoothly follow the mouse in all directions! You can also use <strong>[W/A/S/D]</strong>, <strong>[Arrow Keys]</strong>, or the on-screen buttons.</p>
+                </div>
+              </div>
+
+              <div class="mechanic-item">
+                <div class="mechanic-icon-box yellow-curb-icon">
+                  🟡
+                </div>
+                <div class="mechanic-text">
+                  <strong>Stay on the Sidewalk & Wait at Curbs</strong>
+                  <p>Always walk along the grey sidewalk path. When you reach an intersection, <strong>STOP behind the yellow tactile pavers</strong> and check the corner signal!</p>
+                </div>
+              </div>
+
+              <div class="mechanic-item">
+                <div class="mechanic-icon-box" style="background:#ffb300; color:#fff; font-size:22px;">
+                  🛎️
+                </div>
+                <div class="mechanic-text">
+                  <strong>Press the Crosswalk Button [SPACEBAR]</strong>
+                  <p>At traffic intersections, walk up to the yellow pedestrian signal button on the post and press <strong>[SPACEBAR]</strong> (or tap the sign) to request the crosswalk! Then wait safely on the curb until it turns green to WALK!</p>
+                </div>
+              </div>
+
+              <div class="mechanic-item">
+                <div class="mechanic-icon-box fall-icon">
+                  💥
+                </div>
+                <div class="mechanic-text">
+                  <strong>Don't Cross at the Wrong Time!</strong>
+                  <p>If you rush into the road while the signal says STOP or FLASHING, your character will stumble and sit on the ground to recover!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: How The Signals Work (Using Actual Images!) -->
+          <div class="info-section">
+            <h3 class="section-title"><span>🚦</span> How the Crosswalk Signs Work</h3>
+            <div class="info-signals-grid">
+              <!-- Stop Hand -->
+              <div class="signal-card stop-theme">
+                <div class="signal-image-frame stop-frame">
+                  <img src="assets/ui/signals/signal-stop-hand.png" alt="Solid Stop Hand Sign" class="signal-guide-img">
+                </div>
+                <div class="signal-badge stop">🛑 SOLID STOP HAND</div>
+                <p class="signal-rule"><strong>WAIT ON SIDEWALK:</strong> Cars have the green light. Stand safely on the curb and wait patiently for your turn.</p>
+              </div>
+
+              <!-- Flashing Walk Sign -->
+              <div class="signal-card flashing-theme">
+                <div class="signal-image-frame flashing-glow">
+                  <img src="assets/ui/signals/signal-walk.png" alt="Flashing Walk Sign" class="signal-guide-img blink-img">
+                </div>
+                <div class="signal-badge flashing">⏳ FLASHING WALK SIGN</div>
+                <p class="signal-rule"><strong>DO NOT START CROSSING:</strong> The walk time is ending! You must wait at the curb for the complete cycle:<br>
+                <span class="cycle-pill">1. Wait on Flashing ⏳</span> ➡️ 
+                <span class="cycle-pill">2. Wait on STOP Hand 🛑</span> ➡️ 
+                <span class="cycle-pill">3. Cross on Green WALK 🟢</span></p>
+              </div>
+
+              <!-- Solid Walk -->
+              <div class="signal-card walk-theme">
+                <div class="signal-image-frame walk-glow">
+                  <img src="assets/ui/signals/signal-walk.png" alt="Solid Walk Sign" class="signal-guide-img">
+                </div>
+                <div class="signal-badge walk">🟢 SOLID WALK SIGN</div>
+                <p class="signal-rule"><strong>SAFE TO CROSS:</strong> Cars halt at the stop line! Walk steadily across the white zebra stripes to the opposite sidewalk.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: The Secret Cybertruck -->
+          <div class="info-section cybertruck-section">
+            <h3 class="section-title cybertruck-title"><span>⚡</span> Secret Vehicle: The Cybertruck</h3>
+            <div class="cybertruck-info-card">
+              <div class="cybertruck-img-container">
+                <img src="assets/cars/right/cybertruck.png" alt="Secret Cybertruck" class="cybertruck-guide-img">
+              </div>
+              <div class="cybertruck-details">
+                <div class="cybertruck-tag">🏆 FLAWLESS RUN SECRET</div>
+                <h4>How to See the Cybertruck:</h4>
+                <ul class="cybertruck-steps">
+                  <li><strong>Rule 1:</strong> Complete your entire walk from Home to Grandma's Bakery <strong>WITHOUT FALLING DOWN AT ALL</strong>!</li>
+                  <li><strong>Rule 2:</strong> Wait patiently at every curb and only cross when the signal is solid green.</li>
+                  <li><strong>Rule 3:</strong> The moment you step onto the opposite sidewalk after completing your <strong>final street cross</strong>, the Cybertruck will drive by across the road behind you!</li>
+                  <li><strong>Note:</strong> It only drives by <strong>ONCE</strong>, so keep your eyes open!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Upcoming Challenges (Coming Soon) -->
+          <div class="info-section">
+            <h3 class="section-title"><span>🚸</span> Special Challenges (Coming Soon!)</h3>
+            <p class="section-sub">Exciting new pedestrian safety adventures coming in future updates:</p>
+            <div class="challenges-preview-grid">
+              <!-- ACTIVE INTERACTION 1: School Crossing Guard -->
+              <div class="challenge-preview-card active-card">
+                <div class="challenge-img-box">
+                  <img src="assets/characters/crossing_guard/guard_1.png" alt="School Crossing Guard" class="challenge-thumb-img guard-active-img">
+                  <span class="active-badge">ACTIVE NOW</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🚸 School Crossing Guard</h4>
+                  <p>At Road 2, wait on the sidewalk for the Guard. When they step out with the STOP paddle and wave you across, walk forward safely!</p>
+                </div>
+              </div>
+
+              <!-- ACTIVE INTERACTION 2: Group Crossing -->
+              <div class="challenge-preview-card active-card">
+                <div class="challenge-img-box">
+                  <img src="assets/characters/group_of_3/group3_1.png" alt="Group Crossing" class="challenge-thumb-img">
+                  <span class="active-badge">ACTIVE NOW</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>👥 Cross with the Group (Don't Run Ahead!)</h4>
+                  <p>At Road 1, cross with the Group of 2 and Group of 3. <strong>Never run ahead of the group!</strong> If you run ahead, the people will stop and your character will fall down!</p>
+                </div>
+              </div>
+
+              <!-- ACTIVE INTERACTION 3: Strangers with Dogs -->
+              <div class="challenge-preview-card active-card">
+                <div class="challenge-img-box">
+                  <img src="assets/characters/strangers_dogs/stranger_dog_4.png" alt="Strangers with Dogs" class="challenge-thumb-img">
+                  <span class="active-badge">ACTIVE NOW</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🐕 Strangers with Dogs (Thumbs Up / Down)</h4>
+                  <p>Walk up to dog owners and press <strong>[SPACE]</strong> (or tap) to ask to pet their dog. If thumbs up 👍, you can pet them! If thumbs down 👎, you <strong>MUST walk away</strong>—if you walk closer, the dog barks and you will fall down!</p>
+                </div>
+              </div>
+
+              <!-- ACTIVE INTERACTION 4: Pedestrian Footbridge -->
+              <div class="challenge-preview-card active-card">
+                <div class="challenge-img-box">
+                  <img src="assets/bridge/pedestrian_footbridge.png" alt="Pedestrian Footbridge" class="challenge-thumb-img">
+                  <span class="active-badge">ACTIVE NOW</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🌉 The Pedestrian Bridge (No Crosswalk Street)</h4>
+                  <p>At Road 3, the street has <strong>NO crosswalk</strong>! You must choose to walk across the pedestrian bridge above traffic. If you choose to walk across the street, you will fall down!</p>
+                </div>
+              </div>
+
+              <!-- COMING SOON: Construction Detour -->
+              <div class="challenge-preview-card">
+                <div class="challenge-img-box icon-thumb cone-thumb">
+                  <span class="preview-emoji">🚧</span>
+                  <span class="coming-soon-badge">COMING SOON</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🚧 Sidewalk Construction Detour</h4>
+                  <p>Follow designated orange pedestrian cones and detours around sidewalk work zones safely without stepping into traffic.</p>
+                </div>
+              </div>
+
+              <!-- COMING SOON: Stranger Safety Awareness -->
+              <div class="challenge-preview-card">
+                <div class="challenge-img-box icon-thumb stranger-thumb">
+                  <span class="preview-emoji">🚫</span>
+                  <span class="coming-soon-badge">COMING SOON</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🛑 Stranger Safety Awareness</h4>
+                  <p>If an unfamiliar car slows down or calls out, stay far back on the public sidewalk, ignore them, and briskly keep moving.</p>
+                </div>
+              </div>
+
+              <div class="challenge-preview-card">
+                <div class="challenge-img-box icon-thumb blindspot-thumb">
+                  <span class="preview-emoji">🚚</span>
+                  <span class="coming-soon-badge">COMING SOON</span>
+                </div>
+                <div class="challenge-info">
+                  <h4>🚚 Delivery Van Blind Spots</h4>
+                  <p>Learn how to stop and look Left-Right-Left before stepping around parked vans and large obstacles that hide oncoming traffic.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-footer">
+          <button id="btn-got-it-info" class="big-action-btn pulse-glow">
+            <span>GOT IT! LET'S PLAY!</span> 🚶
+          </button>
+        </div>
+      </div>
+    </div>
+  </div> <!-- /#game-screen-box -->
+
+    <!-- Integrated Progress Bar Directly Below The Square Box -->
+    <div id="progress-hud" class="integrated-progress-bar">
+      <div class="progress-bar-container">
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+          <div id="progress-avatar-marker" class="avatar-marker">
+            <img id="progress-avatar-img" src="assets/characters/boy/face.png" alt="Progress Avatar">
+          </div>
+        </div>
+        <div class="progress-endpoints">
+          <span class="start-point">🏠 Home</span>
+          <span id="end-point-label" class="end-point">🧁 Bakery</span>
+        </div>
+      </div>
+    </div>
+  </div> <!-- /#game-cabinet -->
+</div> <!-- /#game-console-wrapper -->
+
+  <script src="game.js"></script>
+</body>
+</html>
