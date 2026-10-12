@@ -295,86 +295,239 @@ body, html {
   50% { transform: translateX(-50%) scale(1.03); }
 }
 
+/* ==========================================================================
+   Tactile Mobile & Touch Screen Game Controls (D-Pad & Action Button)
+   ========================================================================== */
 .walking-controls {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  z-index: 30;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 35;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: auto;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .walking-controls.hidden {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(20px);
+  transform: translateY(24px);
 }
 
-.walk-ctrl-btn {
+/* 4-Way D-Pad on Left Side */
+.touch-dpad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45));
+}
+
+.dpad-horizontal-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, #334155, #1e293b);
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  color: #f8fafc;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.08s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.dpad-btn .dpad-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  pointer-events: none;
+}
+
+.dpad-up {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  margin-bottom: 3px;
+}
+
+.dpad-down {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  margin-top: 3px;
+}
+
+.dpad-left {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.dpad-right {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.dpad-center-hub {
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, #475569 0%, #1e293b 100%);
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.dpad-btn:hover {
+  filter: brightness(1.15);
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  transform: scale(0.92);
+  background: linear-gradient(145deg, #0284c7, #0369a1);
+  border-color: #38bdf8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.dpad-btn:active .dpad-icon, .dpad-btn.pressed .dpad-icon {
+  color: #ffffff;
+  text-shadow: 0 0 12px #ffffff;
+}
+
+/* Touch Action / Interact Button on Right Side */
+.touch-action-container {
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.45));
+}
+
+.touch-action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 62px;
-  height: 62px;
-  border-radius: 18px;
-  border: 3px solid #ffffff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.28);
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: transform 0.1s, box-shadow 0.1s, filter 0.15s;
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #f59e0b, #d97706);
+  border: 3.5px solid #ffffff;
   color: #ffffff;
-  padding: 2px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.45), inset 0 2px 2px rgba(255, 255, 255, 0.4);
+  transition: transform 0.1s ease, filter 0.15s ease, background 0.2s ease, box-shadow 0.15s ease;
+  padding: 4px;
 }
 
-.walk-ctrl-btn.forward {
-  background: linear-gradient(145deg, #43a047, #2e7d32);
+.touch-action-btn .action-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
 }
 
-.walk-ctrl-btn.backward {
-  background: linear-gradient(145deg, #00acc1, #00838f);
-}
-
-.walk-ctrl-btn .ctrl-icon {
-  font-size: 1.6rem;
+.touch-action-btn .action-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
   line-height: 1;
 }
 
-.walk-ctrl-btn .ctrl-title {
-  font-size: 0.72rem;
+.touch-action-btn .action-subtext {
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  opacity: 0.9;
+  letter-spacing: 0.3px;
+  pointer-events: none;
   margin-top: 2px;
 }
 
-.walk-ctrl-btn .ctrl-shortcut {
-  font-size: 0.65rem;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.walk-ctrl-btn:hover {
+.touch-action-btn:hover {
   transform: translateY(-2px) scale(1.04);
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 
-.walk-ctrl-btn:active, .walk-ctrl-btn.pressed {
-  transform: translateY(3px) scale(0.96);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.touch-action-btn:active, .touch-action-btn.pressed {
+  transform: translateY(3px) scale(0.92);
   filter: brightness(0.92);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Dynamic State Highlights for Action Button */
+.touch-action-btn.highlight-signal {
+  background: linear-gradient(145deg, #ff9800, #e65100);
+  border-color: #ffd54f;
+  animation: actionPulseSignal 1.2s infinite ease-in-out;
+}
+
+@keyframes actionPulseSignal {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 152, 0, 0), 0 8px 22px rgba(255, 152, 0, 0.6);
+    transform: scale(1.06);
+  }
+}
+
+.touch-action-btn.highlight-dog {
+  background: linear-gradient(145deg, #10b981, #059669);
+  border-color: #a7f3d0;
+  animation: actionPulseDog 1.2s infinite ease-in-out;
+}
+
+@keyframes actionPulseDog {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7), 0 6px 16px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0), 0 8px 22px rgba(16, 185, 129, 0.6);
+    transform: scale(1.06);
+  }
 }
 
 @media (max-width: 600px) {
   .walking-controls {
-    right: 12px;
-    bottom: 110px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
   }
-  .walk-ctrl-btn {
-    width: 68px;
-    height: 68px;
+  .dpad-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .dpad-center-hub {
+    width: 28px;
+    height: 28px;
+  }
+  .touch-action-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+  }
+  .touch-action-btn .action-icon {
+    font-size: 1.6rem;
   }
 }
 

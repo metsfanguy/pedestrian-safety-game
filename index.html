@@ -27,18 +27,35 @@
           </button>
         </div>
 
-    <!-- On-Screen Walking Direction Buttons -->
+    <!-- On-Screen Touch Controls (D-Pad Left + Action Button Right) -->
     <div id="walking-controls" class="walking-controls hidden">
-      <button id="btn-walk-forward" class="walk-ctrl-btn forward" title="Walk Forward (Up / W)">
-        <span class="ctrl-icon">⬆️</span>
-        <span class="ctrl-title">FORWARD</span>
-        <span class="ctrl-shortcut">W / ↑</span>
-      </button>
-      <button id="btn-walk-backward" class="walk-ctrl-btn backward" title="Walk Backward (Down / S)">
-        <span class="ctrl-icon">⬇️</span>
-        <span class="ctrl-title">BACKWARD</span>
-        <span class="ctrl-shortcut">S / ↓</span>
-      </button>
+      <!-- Left Side: 4-Way Directional D-Pad -->
+      <div class="touch-dpad-container" id="touch-dpad">
+        <button id="btn-walk-up" class="dpad-btn dpad-up" aria-label="Walk Up" title="Walk Forward (W / ↑)">
+          <span class="dpad-icon">▲</span>
+        </button>
+        <div class="dpad-horizontal-row">
+          <button id="btn-walk-left" class="dpad-btn dpad-left" aria-label="Walk Left" title="Walk Left (A / ←)">
+            <span class="dpad-icon">◀</span>
+          </button>
+          <div class="dpad-center-hub"></div>
+          <button id="btn-walk-right" class="dpad-btn dpad-right" aria-label="Walk Right" title="Walk Right (D / →)">
+            <span class="dpad-icon">▶</span>
+          </button>
+        </div>
+        <button id="btn-walk-down" class="dpad-btn dpad-down" aria-label="Walk Down" title="Walk Backward (S / ↓)">
+          <span class="dpad-icon">▼</span>
+        </button>
+      </div>
+
+      <!-- Right Side: Big Interactive Action Button (Spacebar replacement on touch screen) -->
+      <div class="touch-action-container" id="touch-action">
+        <button id="btn-touch-action" class="touch-action-btn" aria-label="Action / Interact" title="Action / Interact (SPACEBAR)">
+          <span id="touch-action-icon" class="action-icon">🛎️</span>
+          <span id="touch-action-label" class="action-label">ACTION</span>
+          <span class="action-subtext">SPACE</span>
+        </button>
+      </div>
     </div>
 
     <!-- Start Menu Screen Overlay -->

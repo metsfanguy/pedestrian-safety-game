@@ -316,8 +316,15 @@ class PedestrianGame {
     this.progressHud = document.getElementById('progress-hud');
     this.walkingControls = document.getElementById('walking-controls');
     this.movementGuide = document.getElementById('movement-guide');
-    this.btnForward = document.getElementById('btn-walk-forward');
-    this.btnBackward = document.getElementById('btn-walk-backward');
+    this.btnUp = document.getElementById('btn-walk-up');
+    this.btnDown = document.getElementById('btn-walk-down');
+    this.btnLeft = document.getElementById('btn-walk-left');
+    this.btnRight = document.getElementById('btn-walk-right');
+    this.btnAction = document.getElementById('btn-touch-action');
+    this.touchActionIcon = document.getElementById('touch-action-icon');
+    this.touchActionLabel = document.getElementById('touch-action-label');
+    this.btnForward = this.btnUp;
+    this.btnBackward = this.btnDown;
     this.starCountEl = document.getElementById('star-count');
     this.progressFillEl = document.getElementById('progress-fill');
     this.progressAvatarMarker = document.getElementById('progress-avatar-marker');
@@ -1119,8 +1126,9 @@ class PedestrianGame {
         // Release walking keys
         this.keys.up = false;
         this.keys.down = false;
-        if (this.btnForward) this.btnForward.classList.remove('pressed');
-        if (this.btnBackward) this.btnBackward.classList.remove('pressed');
+        this.keys.left = false;
+        this.keys.right = false;
+        this.resetButtonStyles();
         sfx.tick();
       }
     };
@@ -1177,38 +1185,46 @@ class PedestrianGame {
 
       if (e.code === 'Space') {
         e.preventDefault();
+        if (this.btnAction) this.btnAction.classList.add('pressed');
         this.handleSpaceAction();
         return;
       }
 
       if (isUpKey(e)) {
         this.keys.up = true;
-        if (this.btnForward) this.btnForward.classList.add('pressed');
+        if (this.btnUp) this.btnUp.classList.add('pressed');
         e.preventDefault();
       } else if (isDownKey(e)) {
         this.keys.down = true;
-        if (this.btnBackward) this.btnBackward.classList.add('pressed');
+        if (this.btnDown) this.btnDown.classList.add('pressed');
         e.preventDefault();
       } else if (isLeftKey(e)) {
         this.keys.left = true;
+        if (this.btnLeft) this.btnLeft.classList.add('pressed');
         e.preventDefault();
       } else if (isRightKey(e)) {
         this.keys.right = true;
+        if (this.btnRight) this.btnRight.classList.add('pressed');
         e.preventDefault();
       }
     });
 
     window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        if (this.btnAction) this.btnAction.classList.remove('pressed');
+      }
       if (isUpKey(e)) {
         this.keys.up = false;
-        if (this.btnForward) this.btnForward.classList.remove('pressed');
+        if (this.btnUp) this.btnUp.classList.remove('pressed');
       } else if (isDownKey(e)) {
         this.keys.down = false;
-        if (this.btnBackward) this.btnBackward.classList.remove('pressed');
+        if (this.btnDown) this.btnDown.classList.remove('pressed');
       } else if (isLeftKey(e)) {
         this.keys.left = false;
+        if (this.btnLeft) this.btnLeft.classList.remove('pressed');
       } else if (isRightKey(e)) {
         this.keys.right = false;
+        if (this.btnRight) this.btnRight.classList.remove('pressed');
       }
     });
 
@@ -1255,11 +1271,12 @@ class PedestrianGame {
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
 
-    // On-Screen Directional Touch & Mouse Buttons
+    // On-Screen Directional Touch & Mouse Buttons (4-way D-Pad)
     const setupCtrlBtn = (btn, dirKey) => {
       if (!btn) return;
       const startPress = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') {
           return;
         }
@@ -1269,6 +1286,7 @@ class PedestrianGame {
 
       const endPress = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         this.keys[dirKey] = false;
         btn.classList.remove('pressed');
       };
@@ -1281,8 +1299,27 @@ class PedestrianGame {
       btn.addEventListener('touchcancel', endPress, { passive: false });
     };
 
-    setupCtrlBtn(this.btnForward, 'up');
-    setupCtrlBtn(this.btnBackward, 'down');
+    setupCtrlBtn(this.btnUp, 'up');
+    setupCtrlBtn(this.btnDown, 'down');
+    setupCtrlBtn(this.btnLeft, 'left');
+    setupCtrlBtn(this.btnRight, 'right');
+
+    // On-Screen Interactive Action Button (Spacebar replacement for touch screen)
+    if (this.btnAction) {
+      const triggerAction = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.btnAction.classList.add('pressed');
+        sfx.tick();
+        this.handleSpaceAction();
+        setTimeout(() => {
+          if (this.btnAction) this.btnAction.classList.remove('pressed');
+        }, 160);
+      };
+
+      this.btnAction.addEventListener('mousedown', triggerAction);
+      this.btnAction.addEventListener('touchstart', triggerAction, { passive: false });
+    }
   }
 
   setupTraffic() {
@@ -1352,8 +1389,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
-    if (this.btnForward) this.btnForward.classList.remove('pressed');
-    if (this.btnBackward) this.btnBackward.classList.remove('pressed');
+    this.resetButtonStyles();
 
     if (this.destinationIconEl) this.destinationIconEl.textContent = this.destination.icon;
     if (this.destinationTextEl) this.destinationTextEl.textContent = `Heading to ${this.destination.title}`;
@@ -1405,6 +1441,7 @@ class PedestrianGame {
     this.updateStrangersWithDogs(dt);
     this.updateStrangerVans(dt);
     this.updatePedestrianBridge(dt);
+    this.updateTouchActionButton();
 
     if (this.confettiParticles.length > 0) {
       this.confettiParticles.forEach(p => {
@@ -1945,8 +1982,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
-    if (this.btnForward) this.btnForward.classList.remove('pressed');
-    if (this.btnBackward) this.btnBackward.classList.remove('pressed');
+    this.resetButtonStyles();
 
     // Reset signal state on mistake so player must follow the safe sequence again
     if (zone.hasCrossingGuard) {
@@ -2072,6 +2108,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
 
     // Reset group back to curb waiting position so they can cross together again
     const g2 = zone.groupOf2 || this.groupOf2;
@@ -2129,6 +2166,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
 
     sfx.carBrake();
     sfx.buzz();
@@ -2156,6 +2194,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
 
     sfx.buzz();
 
@@ -2185,6 +2224,7 @@ class PedestrianGame {
     this.mouseControl.isDown = false;
     this.mouseControl.targetWorldX = null;
     this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
 
     sfx.buzz();
     sfx.carBrake();
@@ -2367,6 +2407,69 @@ class PedestrianGame {
     this.interactWithNearbyStranger();
   }
 
+  resetButtonStyles() {
+    if (this.btnUp) this.btnUp.classList.remove('pressed');
+    if (this.btnDown) this.btnDown.classList.remove('pressed');
+    if (this.btnLeft) this.btnLeft.classList.remove('pressed');
+    if (this.btnRight) this.btnRight.classList.remove('pressed');
+    if (this.btnAction) this.btnAction.classList.remove('pressed');
+  }
+
+  updateTouchActionButton() {
+    if (!this.btnAction) return;
+
+    if (this.player.isFalling || this.state === 'START_MENU' || this.state === 'VICTORY') {
+      this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
+      if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
+      if (this.touchActionLabel) this.touchActionLabel.textContent = 'ACTION';
+      return;
+    }
+
+    // 1. Proximity to traffic light intersection button
+    const currentZone = this.crossingZones[this.currentCrossingIndex];
+    let isNearSignal = false;
+    if (currentZone && currentZone.trialType === 'TRAFFIC_LIGHT' && !currentZone.walkGranted) {
+      const postX = this.sidewalkX + this.sidewalkWidth + 18;
+      const postY = currentZone.southCurbY + 14;
+      const distToPost = Math.hypot(this.player.x - postX, this.player.y - postY);
+      isNearSignal = (distToPost < 115) || (Math.abs(this.player.y - currentZone.southCurbY) < 95 && this.player.x > this.pathCenterX - 45);
+    }
+
+    // 2. Proximity to stranger with dog
+    let isNearDog = false;
+    if (this.strangersWithDogs) {
+      for (const stranger of this.strangersWithDogs) {
+        const dist = Math.hypot(this.player.x - stranger.x, this.player.y - stranger.y);
+        if (dist < 85 && stranger.status === 'IDLE') {
+          isNearDog = true;
+          break;
+        }
+      }
+    }
+
+    if (isNearSignal) {
+      this.btnAction.classList.add('highlight-signal');
+      this.btnAction.classList.remove('highlight-dog');
+      if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
+      if (this.touchActionLabel) {
+        this.touchActionLabel.textContent = currentZone.pedestrianButtonPressed ? 'WAITING' : 'PRESS SIGN';
+      }
+    } else if (isNearDog) {
+      this.btnAction.classList.add('highlight-dog');
+      this.btnAction.classList.remove('highlight-signal');
+      if (this.touchActionIcon) this.touchActionIcon.textContent = '🐕';
+      if (this.touchActionLabel) {
+        this.touchActionLabel.textContent = 'ASK OWNER';
+      }
+    } else {
+      this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
+      if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
+      if (this.touchActionLabel) {
+        this.touchActionLabel.textContent = 'ACTION';
+      }
+    }
+  }
+
   updatePedestrianBridge(dt) {
     const currentZone = this.crossingZones[this.currentCrossingIndex];
     if (!currentZone || !currentZone.hasBridge || !currentZone.bridge) {
@@ -2397,8 +2500,9 @@ class PedestrianGame {
     this.player.isWalking = false;
     this.keys.up = false;
     this.keys.down = false;
-    if (this.btnForward) this.btnForward.classList.remove('pressed');
-    if (this.btnBackward) this.btnBackward.classList.remove('pressed');
+    this.keys.left = false;
+    this.keys.right = false;
+    this.resetButtonStyles();
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
     if (this.movementGuide) this.movementGuide.classList.add('hidden');
     this.updateProgressBar();
