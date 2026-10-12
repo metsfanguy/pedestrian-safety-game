@@ -974,7 +974,7 @@ class PedestrianGame {
 
       const template = dogPool[i % dogPool.length];
       const side = Math.random() < 0.5 ? -1 : 1;
-      const dogX = this.pathCenterX + (side * 36);
+      const dogX = this.pathCenterX + (side * 46);
       const dogY = Math.round((blk.top + blk.bottom) / 2) + Math.round((Math.random() - 0.5) * 80);
 
       this.strangersWithDogs.push({
@@ -2332,7 +2332,53 @@ class PedestrianGame {
     // Fall down right here where the dog startled the player
     stranger.status = 'IDLE';
 
+    // Position player safely on the sidewalk center at comfortable distance
+    this.player.x = this.pathCenterX;
+    if (this.player.y < stranger.y) {
+      this.player.y = stranger.y - 62;
+    } else {
+      this.player.y = stranger.y + 62;
+    }
+
     this.showInWorldFeedback('💥 STARTLED! 🛑 When an owner says NO, always walk away!' + chancesMsg, '#d32f2f');
+  }
+
+  triggerPlayerFallFromDogWithoutAsking(stranger) {
+    if (this.player.isFalling) return;
+    const chancesMsg = this.registerSafetyMistake(
+      'DOG_WITHOUT_ASKING',
+      'Never approach or try to touch a dog without asking the owner first! Always stop at a safe distance and ASK.'
+    );
+
+    this.state = 'PLAYER_FALLING';
+    this.player.isFalling = true;
+    this.player.isWalking = false;
+    this.player.fallFrame = 0;
+    this.player.fallTimer = 0;
+    this.player.facing = 'up';
+    this.player.fallTargetY = null; // Fall down right here on the sidewalk!
+
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.mouseControl.isDown = false;
+    this.mouseControl.targetWorldX = null;
+    this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
+
+    sfx.buzz();
+
+    // Reset status and nudge character back to safe asking distance on the sidewalk
+    stranger.status = 'IDLE';
+    this.player.x = this.pathCenterX;
+    if (this.player.y < stranger.y) {
+      this.player.y = stranger.y - 62;
+    } else {
+      this.player.y = stranger.y + 62;
+    }
+
+    this.showInWorldFeedback('💥 STARTLED! 🛑 ALWAYS ASK THE OWNER FIRST before approaching a dog!' + chancesMsg, '#d32f2f');
   }
 
   triggerPlayerFallFromStrangerVan(van) {
@@ -2403,6 +2449,14 @@ class PedestrianGame {
     this.strangersWithDogs.forEach(stranger => {
       const dist = Math.hypot(this.player.x - stranger.x, this.player.y - stranger.y);
 
+      // Check 1: Going to the dog BEFORE asking the owner
+      if (stranger.status === 'IDLE' && dist < 42) {
+        sfx.dogBark();
+        this.triggerPlayerFallFromDogWithoutAsking(stranger);
+        return;
+      }
+
+      // Check 2: If owner said NO (THUMBS_DOWN), player must walk away
       if (stranger.status === 'THUMBS_DOWN') {
         // If they give you a thumbs down, you have to walk away, and if you walk closer, you'll fall down
         if (stranger.initialDist !== null && (dist < stranger.initialDist - 10 || dist < 38)) {
@@ -3658,6 +3712,15 @@ class PedestrianGame {
         ctx.setLineDash([6, 6]);
         ctx.beginPath();
         ctx.arc(0, 0, 46 * pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (stranger.status === 'IDLE' && dist < 75) {
+        // Caution buffer ring: Ask before stepping closer!
+        ctx.strokeStyle = '#ffa000';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 42, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
