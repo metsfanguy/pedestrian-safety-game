@@ -43,18 +43,23 @@
         <div id="store-hud" class="store-hud hidden">
           <div class="shopping-clipboard animate-pop" id="shopping-clipboard">
             <div class="clipboard-clip"></div>
-            <div class="shopping-list-header">
+            <div class="shopping-list-header" id="shopping-list-header" title="Click to minimize or expand">
               <div class="shopping-title-row">
                 <span class="shopping-icon">📋</span>
                 <span class="shopping-title">GROCERY LIST</span>
               </div>
-              <span id="store-items-counter" class="store-counter-pill">0/3</span>
+              <div class="header-right-tools">
+                <span id="store-items-counter" class="store-counter-pill">0/3</span>
+                <button id="btn-toggle-list" class="toggle-list-btn" title="Minimize / Expand List">🔽</button>
+              </div>
             </div>
-            <div id="store-checklist" class="store-checklist">
-              <!-- Dynamically populated items with checkboxes -->
-            </div>
-            <div id="store-goal-banner" class="store-goal-banner">
-              Find the items on the shelves!
+            <div id="store-list-body" class="store-list-body">
+              <div id="store-checklist" class="store-checklist">
+                <!-- Dynamically populated items with checkboxes -->
+              </div>
+              <div id="store-goal-banner" class="store-goal-banner">
+                Find the items on the shelves!
+              </div>
             </div>
           </div>
         </div>
@@ -235,52 +240,135 @@
       </div> <!-- /#victory-card -->
     </div> <!-- /#victory-modal -->
 
-    <!-- Store Checkout & Receipt Modal (Level 2 Completion) -->
-    <div id="checkout-modal" class="screen-overlay hidden">
-      <div class="receipt-card animate-bounce">
-        <div class="receipt-top-clip"></div>
-        <div class="receipt-header">
-          <div class="receipt-store-title">🛒 FRESH MARKET GROCERY</div>
-          <div class="receipt-sub">PEDESTRIAN SAFETY DISTRICT</div>
-          <div class="receipt-date" id="receipt-date-text">OFFICIAL REGISTER RECEIPT</div>
-        </div>
-        <div class="receipt-dashed-line">----------------------------------------</div>
-        <div class="receipt-items-container" id="receipt-items-container">
-          <!-- Dynamically populated shopping items -->
-        </div>
-        <div class="receipt-dashed-line">----------------------------------------</div>
-        <div class="receipt-totals-section">
-          <div class="receipt-row">
-            <span>ITEMS PURCHASED:</span>
-            <strong id="receipt-count-val">3</strong>
-          </div>
-          <div class="receipt-row receipt-total-highlight">
-            <span>TOTAL PAID:</span>
-            <strong id="receipt-price-val">$5.50</strong>
-          </div>
-        </div>
-        <div class="receipt-stamp-container">
-          <div class="receipt-stamp">PAID IN FULL 💳✨</div>
+    <!-- Interactive Cash Register Checkout Mini-Game Modal -->
+    <div id="checkout-minigame-modal" class="screen-overlay hidden">
+      <div class="terminal-card animate-pop">
+        <div class="terminal-header">
+          <div class="terminal-brand-pill">🛒 FRESH MARKET CASH REGISTER</div>
+          <div class="terminal-step-badge" id="terminal-step-badge">STEP 1: SCAN ITEMS</div>
         </div>
 
-        <div class="badge-award shopper-award">
-          <div class="medal-icon">🏅</div>
+        <!-- Stage 1: Barcode Scanner Conveyor Belt -->
+        <div id="checkout-stage-scan" class="checkout-stage">
+          <p class="stage-instruction">Tap each grocery item below to scan its barcode! 🏷️</p>
+          <div class="conveyor-container">
+            <div class="conveyor-scanner-beam">
+              <span class="laser-light"></span>
+              <span class="scanner-sensor-label">🔴 BARCODE LASER SCANNER</span>
+            </div>
+            <div class="conveyor-items-row" id="conveyor-items-row">
+              <!-- Items loaded dynamically -->
+            </div>
+          </div>
+          <div class="register-running-bar">
+            <span>Items Scanned: <strong id="scan-progress-count">0 / 3</strong></span>
+            <span>Total: <strong id="scan-running-total" class="running-total-green">$0.00</strong></span>
+          </div>
+        </div>
+
+        <!-- Stage 2: Payment (Bills, Coins, or Tap Card) -->
+        <div id="checkout-stage-pay" class="checkout-stage hidden">
+          <div class="register-display-screen">
+            <div class="register-screen-row">
+              <span class="screen-label">TOTAL DUE:</span>
+              <span class="screen-val due-val" id="register-due-val">$5.00</span>
+            </div>
+            <div class="register-screen-row sub-row">
+              <span class="screen-label">PAID SO FAR:</span>
+              <span class="screen-val paid-val" id="register-paid-val">$0.00</span>
+            </div>
+            <div id="register-status-msg" class="register-status-msg">
+              Tap money or card below to pay!
+            </div>
+          </div>
+
+          <div class="money-grid">
+            <button class="money-btn bill-btn" id="btn-pay-one" title="Pay with $1.00 Bill">
+              <span class="money-emoji">💵</span>
+              <span class="money-title">$1.00</span>
+              <span class="money-sub">Dollar Bill</span>
+            </button>
+            <button class="money-btn bill-btn" id="btn-pay-five" title="Pay with $5.00 Bill">
+              <span class="money-emoji">💵</span>
+              <span class="money-title">$5.00</span>
+              <span class="money-sub">Five Dollars</span>
+            </button>
+            <button class="money-btn coin-btn" id="btn-pay-quarter" title="Pay with 25¢ Quarter">
+              <span class="money-emoji">🪙</span>
+              <span class="money-title">25¢</span>
+              <span class="money-sub">Quarter</span>
+            </button>
+            <button class="money-btn card-btn" id="btn-pay-card" title="Tap Card to Pay Exact Amount">
+              <span class="money-emoji">💳</span>
+              <span class="money-title">TAP CARD</span>
+              <span class="money-sub">Pay Exact</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stage 3: Bag Packaging & Return Home Mission -->
+        <div id="checkout-stage-bag" class="checkout-stage hidden">
+          <div class="paid-stamp-box">
+            <div class="paid-stamp animate-bounce">PAID IN FULL! 💳✨</div>
+          </div>
+          <div class="bag-handoff-card">
+            <img src="assets/shopping/items/57_grocery_bag.png" alt="Packed Grocery Bag" class="bag-handoff-img animate-bounce">
+            <div class="bag-handoff-info">
+              <h3>Groceries Packed & Ready! 🛍️</h3>
+              <p>Awesome job paying at the register! Now head out the door and walk <strong>HOME</strong> safely!</p>
+            </div>
+          </div>
+          <button id="btn-take-groceries-home" class="big-action-btn pulse-glow">
+            <span>TAKE GROCERIES & WALK HOME! 🚶💨</span>
+          </button>
+        </div>
+      </div>
+    </div> <!-- /#checkout-minigame-modal -->
+
+    <!-- Home Arrival Victory Modal (Level 2 Complete) -->
+    <div id="home-victory-modal" class="screen-overlay hidden">
+      <div class="victory-card animate-bounce">
+        <div class="victory-confetti-banner">🎉 SAFELY HOME WITH GROCERIES! 🎉</div>
+        <div class="victory-icon">🏡🛍️</div>
+        <h2 class="victory-title">Welcome Back Home!</h2>
+        <p class="victory-sub">You walked to the grocery store, found your items, paid at checkout, and delivered all the food safely home!</p>
+
+        <div class="delivered-groceries-card">
+          <div class="delivered-card-title">DELIVERED TO HOME:</div>
+          <div class="delivered-items-row" id="home-delivered-items">
+            <!-- 3 item thumbnails with names -->
+          </div>
+        </div>
+
+        <div class="victory-stats-card">
+          <div class="stat-box">
+            <span class="stat-num" id="home-stat-stars">5 / 5</span>
+            <span class="stat-label">Safety Stars ⭐</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">Round Trip Done 🚸</span>
+          </div>
+        </div>
+
+        <div class="badge-award">
+          <div class="medal-icon">🏆</div>
           <div class="medal-text">
-            <strong>Certified Super Shopper Hero!</strong>
-            <span>Walked all crosswalks safely & checked out like a pro!</span>
+            <strong>Certified Master Pedestrian Hero!</strong>
+            <span>Completed both outward and return trips with flawless pedestrian safety!</span>
           </div>
         </div>
 
         <div class="receipt-buttons-row">
-          <button id="store-play-again-btn" class="big-action-btn pulse-glow">
-            <span>PLAY LEVEL 2 AGAIN!</span> 🛒
+          <button id="home-play-again-btn" class="big-action-btn pulse-glow">
+            <span>PLAY AGAIN!</span> 🔄
           </button>
-          <button id="store-main-menu-btn" class="secondary-btn">
+          <button id="home-main-menu-btn" class="secondary-btn">
             <span>MAIN MENU</span> 🏠
           </button>
         </div>
       </div>
-    </div> <!-- /#checkout-modal -->
+    </div> <!-- /#home-victory-modal -->
 
     <!-- Game Over / Safety Practice Reset Screen -->
     <div id="game-over-modal" class="screen-overlay hidden">

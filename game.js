@@ -163,6 +163,19 @@ class SoundEffects {
     setTimeout(() => this.playTone(659.25, 'sine', 0.3, 0.15), 140);
   }
 
+  barcodeScan() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(2400, 'sine', 0.08, 0.18);
+  }
+
+  coinClink() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(1975, 'sine', 0.06, 0.12);
+    setTimeout(() => this.playTone(2637, 'sine', 0.08, 0.1), 35);
+  }
+
   guardWhistle() {
     if (!this.enabled) return;
     this.init();
@@ -395,8 +408,16 @@ class PedestrianGame {
     this.storeChecklist = document.getElementById('store-checklist');
     this.storeGoalBanner = document.getElementById('store-goal-banner');
     this.checkoutModal = document.getElementById('checkout-modal');
+    this.checkoutMinigameModal = document.getElementById('checkout-minigame-modal');
+    this.homeVictoryModal = document.getElementById('home-victory-modal');
     this.storePlayAgainBtn = document.getElementById('store-play-again-btn');
     this.storeMainMenuBtn = document.getElementById('store-main-menu-btn');
+    this.storeBagImage = this.loadImage('assets/shopping/items/57_grocery_bag.png');
+    this.isWalkingHome = false;
+    this.hasGroceries = false;
+    this.returnCrossingIndex = 0;
+    this.checkoutTotalDue = 0;
+    this.checkoutPaidSoFar = 0;
 
     // Keyboard & Touch Movement Keys (Supports all 4 directions & diagonals)
     this.keys = { up: false, down: false, left: false, right: false };
@@ -1240,6 +1261,58 @@ class PedestrianGame {
       });
     }
 
+    // Toggle Shopping List Clipboard Minimize / Expand
+    const toggleListBtn = document.getElementById('btn-toggle-list');
+    const shoppingClipboard = document.querySelector('.shopping-clipboard');
+    if (toggleListBtn && shoppingClipboard) {
+      toggleListBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sfx.buttonPress();
+        shoppingClipboard.classList.toggle('minimized');
+        toggleListBtn.textContent = shoppingClipboard.classList.contains('minimized') ? '➕' : '➖';
+      });
+    }
+
+    // Checkout Mini-Game Payment Buttons
+    const payOneBtn = document.getElementById('btn-pay-one');
+    if (payOneBtn) payOneBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(1.00));
+
+    const payFiveBtn = document.getElementById('btn-pay-five');
+    if (payFiveBtn) payFiveBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(5.00));
+
+    const payQuarterBtn = document.getElementById('btn-pay-quarter');
+    if (payQuarterBtn) payQuarterBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.25));
+
+    const payCardBtn = document.getElementById('btn-pay-card');
+    if (payCardBtn) payCardBtn.addEventListener('click', () => this.handleCheckoutCardTap());
+
+    // Button to start walking back home from checkout
+    const btnTakeHome = document.getElementById('btn-take-groceries-home');
+    if (btnTakeHome) {
+      btnTakeHome.addEventListener('click', () => {
+        sfx.buttonPress();
+        this.startWalkHome();
+      });
+    }
+
+    // Home Arrival Victory Modal Buttons (Level 2 Completion)
+    const homePlayAgain = document.getElementById('home-play-again-btn');
+    if (homePlayAgain) {
+      homePlayAgain.addEventListener('click', () => {
+        sfx.playTone(523, 'triangle', 0.2);
+        this.startLevel2StoreGame();
+      });
+    }
+
+    const homeMainMenu = document.getElementById('home-main-menu-btn');
+    if (homeMainMenu) {
+      homeMainMenu.addEventListener('click', () => {
+        sfx.buttonPress();
+        if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+        this.resetToStartMenu();
+      });
+    }
+
     // Safety Practice Again Button (Game Over Modal)
     const practiceAgainBtn = document.getElementById('practice-again-btn');
     if (practiceAgainBtn) {
@@ -1320,7 +1393,8 @@ class PedestrianGame {
         return;
       }
 
-      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
+      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING' &&
+          this.state !== 'WALKING_HOME_SIDEWALK' && this.state !== 'CROSSING_ROAD_HOME' && this.state !== 'WALKING_HOME_TO_DOOR') {
         return;
       }
 
@@ -1374,7 +1448,8 @@ class PedestrianGame {
     // ========================================================================
     const onPointerDown = (e) => {
       if (this.infoModal && !this.infoModal.classList.contains('hidden')) return;
-      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
+      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING' &&
+          this.state !== 'WALKING_HOME_SIDEWALK' && this.state !== 'CROSSING_ROAD_HOME' && this.state !== 'WALKING_HOME_TO_DOOR') {
         return;
       }
       if (e.target !== this.canvas) return;
@@ -1426,7 +1501,8 @@ class PedestrianGame {
       const startPress = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
+        if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING' &&
+            this.state !== 'WALKING_HOME_SIDEWALK' && this.state !== 'CROSSING_ROAD_HOME' && this.state !== 'WALKING_HOME_TO_DOOR') {
           return;
         }
         this.keys[dirKey] = true;
@@ -1554,6 +1630,8 @@ class PedestrianGame {
     this.startMenu.classList.add('hidden');
     this.victoryModal.classList.add('hidden');
     if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
+    if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
     if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     this.challengeModal.classList.add('hidden'); // Modal is never used now!
@@ -1562,22 +1640,36 @@ class PedestrianGame {
     if (this.walkingControls) this.walkingControls.classList.remove('hidden');
     if (this.movementGuide) this.movementGuide.classList.remove('hidden');
 
+    this.isWalkingHome = false;
+    this.hasGroceries = false;
+    this.returnCrossingIndex = 0;
+
     this.setupTraffic();
     this.updateProgressBar();
     this.state = 'WALKING_SIDEWALK';
   }
 
   updateProgressBar() {
-    const totalDist = this.startY - this.destinationY;
-    const currentDist = this.startY - this.player.y;
-    const pct = Math.max(0, Math.min(100, Math.round((currentDist / totalDist) * 100)));
+    let pct = 0;
+    if (this.isWalkingHome) {
+      const returnDist = this.player.y - this.destinationY;
+      const totalReturn = this.startY - this.destinationY;
+      pct = Math.max(0, Math.min(100, Math.round((returnDist / totalReturn) * 100)));
+      if (this.destinationTextEl) {
+        this.destinationTextEl.textContent = 'Heading Back Home with Groceries 🏡🛍️';
+      }
+    } else {
+      const totalDist = this.startY - this.destinationY;
+      const currentDist = this.startY - this.player.y;
+      pct = Math.max(0, Math.min(100, Math.round((currentDist / totalDist) * 100)));
+      if (this.destinationTextEl) {
+        const crossingNum = Math.min(this.totalCrossings, this.currentCrossingIndex + 1);
+        this.destinationTextEl.textContent = `Crossing ${crossingNum} of ${this.totalCrossings} • ${this.destination.title}`;
+      }
+    }
 
     if (this.progressFillEl) this.progressFillEl.style.width = `${pct}%`;
     if (this.progressAvatarMarker) this.progressAvatarMarker.style.left = `${pct}%`;
-    if (this.destinationTextEl) {
-      const crossingNum = Math.min(this.totalCrossings, this.currentCrossingIndex + 1);
-      this.destinationTextEl.textContent = `Crossing ${crossingNum} of ${this.totalCrossings} • ${this.destination.title}`;
-    }
   }
 
   // ==========================================================================
@@ -1692,7 +1784,7 @@ class PedestrianGame {
         this.player.hasThudded = false;
         this.player.fallFrame = 0;
         this.player.fallTimer = 0;
-        this.player.facing = 'up';
+        this.player.facing = this.isWalkingHome ? 'down' : 'up';
         if (this.player.fallTargetY !== null && this.player.fallTargetY !== undefined) {
           this.player.y = this.player.fallTargetY;
         }
@@ -1703,7 +1795,7 @@ class PedestrianGame {
           return;
         }
 
-        this.state = 'WALKING_SIDEWALK';
+        this.state = this.isWalkingHome ? 'WALKING_HOME_SIDEWALK' : 'WALKING_SIDEWALK';
       }
 
       // Camera smoothly follows player
@@ -1715,7 +1807,14 @@ class PedestrianGame {
     // ========================================================================
     // INTERACTIVE WALKING MOVEMENT (MOUSE FOLLOWING & KEYBOARD CONTROLS)
     // ========================================================================
-    const canMove = (this.state === 'WALKING_SIDEWALK' || this.state === 'CROSSING_ROAD' || this.state === 'WALKING_TO_GOAL');
+    const canMove = (
+      this.state === 'WALKING_SIDEWALK' ||
+      this.state === 'CROSSING_ROAD' ||
+      this.state === 'WALKING_TO_GOAL' ||
+      this.state === 'WALKING_HOME_SIDEWALK' ||
+      this.state === 'CROSSING_ROAD_HOME' ||
+      this.state === 'WALKING_HOME_TO_DOOR'
+    );
 
     if (canMove) {
       let moveVx = 0;
@@ -1767,6 +1866,13 @@ class PedestrianGame {
 
       // Constrain player horizontally within world screen boundaries
       this.player.x = Math.max(40, Math.min(this.worldWidth - 40, this.player.x));
+
+      if (this.isWalkingHome) {
+        this.updateWalkHome(dt);
+        const idealCamY = this.player.y - (this.canvas.height / this.scale) * 0.55;
+        this.cameraY += (idealCamY - this.cameraY) * 0.25;
+        return;
+      }
 
       // Constrain player within playable world boundaries:
       // Cannot walk off bottom of world or back across previous road
@@ -2240,7 +2346,7 @@ class PedestrianGame {
     this.player.isWalking = false;
     this.player.fallFrame = 0;
     this.player.fallTimer = 0;
-    this.player.facing = 'up';
+    this.player.facing = this.isWalkingHome ? 'down' : 'up';
 
     this.keys.up = false;
     this.keys.down = false;
@@ -2277,7 +2383,7 @@ class PedestrianGame {
       zone.pedestrianButtonPressed = false;
     }
 
-    this.player.fallTargetY = zone.southCurbY + 10;
+    this.player.fallTargetY = this.isWalkingHome ? (zone.northCurbY - 10) : (zone.southCurbY + 10);
 
     // Sound: car screech + buzzer
     sfx.carBrake();
@@ -2809,17 +2915,19 @@ class PedestrianGame {
   }
 
   interactWithSignalButton() {
-    if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return false;
+    if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' &&
+        this.state !== 'WALKING_HOME_SIDEWALK' && this.state !== 'CROSSING_ROAD_HOME' && this.state !== 'WALKING_HOME_TO_DOOR') return false;
     if (this.player.isFalling) return false;
 
-    const currentZone = this.crossingZones[this.currentCrossingIndex];
+    const currentZone = this.isWalkingHome ? this.crossingZones[this.returnCrossingIndex] : this.crossingZones[this.currentCrossingIndex];
     if (!currentZone || currentZone.trialType !== 'TRAFFIC_LIGHT') return false;
     if (currentZone.walkGranted) return false;
 
     const postX = this.sidewalkX + this.sidewalkWidth + 18;
-    const postY = currentZone.southCurbY + 14;
+    const postY = this.isWalkingHome ? (currentZone.northCurbY - 14) : (currentZone.southCurbY + 14);
+    const targetCurbY = this.isWalkingHome ? currentZone.northCurbY : currentZone.southCurbY;
     const distToPost = Math.hypot(this.player.x - postX, this.player.y - postY);
-    const isNearPostOrCurb = (distToPost < 115) || (Math.abs(this.player.y - currentZone.southCurbY) < 95 && this.player.x > this.pathCenterX - 45);
+    const isNearPostOrCurb = (distToPost < 115) || (Math.abs(this.player.y - targetCurbY) < 95 && this.player.x > this.pathCenterX - 45);
 
     if (isNearPostOrCurb) {
       if (!currentZone.pedestrianButtonPressed) {
@@ -2840,10 +2948,10 @@ class PedestrianGame {
   }
 
   checkSignalButtonClick(worldX, worldY) {
-    const currentZone = this.crossingZones[this.currentCrossingIndex];
+    const currentZone = this.isWalkingHome ? this.crossingZones[this.returnCrossingIndex] : this.crossingZones[this.currentCrossingIndex];
     if (!currentZone || currentZone.trialType !== 'TRAFFIC_LIGHT') return false;
     const postX = this.sidewalkX + this.sidewalkWidth + 18;
-    const postY = currentZone.southCurbY + 14;
+    const postY = this.isWalkingHome ? (currentZone.northCurbY - 14) : (currentZone.southCurbY + 14);
     const dist = Math.hypot(worldX - postX, worldY - postY);
     if (dist < 55) {
       return this.interactWithSignalButton();
@@ -2857,7 +2965,8 @@ class PedestrianGame {
       return;
     }
 
-    if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return;
+    if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' &&
+        this.state !== 'WALKING_HOME_SIDEWALK' && this.state !== 'CROSSING_ROAD_HOME' && this.state !== 'WALKING_HOME_TO_DOOR') return;
     if (this.player.isFalling || this.player.isPettingDog) return;
 
     // 1. Check if near crosswalk button at a traffic light intersection
@@ -2911,13 +3020,14 @@ class PedestrianGame {
     }
 
     // 1. Proximity to traffic light intersection button
-    const currentZone = this.crossingZones[this.currentCrossingIndex];
+    const currentZone = this.isWalkingHome ? this.crossingZones[this.returnCrossingIndex] : this.crossingZones[this.currentCrossingIndex];
     let isNearSignal = false;
     if (currentZone && currentZone.trialType === 'TRAFFIC_LIGHT' && !currentZone.walkGranted) {
       const postX = this.sidewalkX + this.sidewalkWidth + 18;
-      const postY = currentZone.southCurbY + 14;
+      const postY = this.isWalkingHome ? (currentZone.northCurbY - 14) : (currentZone.southCurbY + 14);
+      const targetCurbY = this.isWalkingHome ? currentZone.northCurbY : currentZone.southCurbY;
       const distToPost = Math.hypot(this.player.x - postX, this.player.y - postY);
-      isNearSignal = (distToPost < 115) || (Math.abs(this.player.y - currentZone.southCurbY) < 95 && this.player.x > this.pathCenterX - 45);
+      isNearSignal = (distToPost < 115) || (Math.abs(this.player.y - targetCurbY) < 95 && this.player.x > this.pathCenterX - 45);
     }
 
     // 2. Proximity to stranger with dog
@@ -3056,10 +3166,15 @@ class PedestrianGame {
 
     this.victoryModal.classList.add('hidden');
     if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
+    if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
     if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
     if (this.movementGuide) this.movementGuide.classList.add('hidden');
+    this.isWalkingHome = false;
+    this.hasGroceries = false;
+    this.returnCrossingIndex = 0;
     this.startMenu.classList.remove('hidden');
     this.setLevel(this.gameLevel || 1);
 
@@ -3577,8 +3692,10 @@ class PedestrianGame {
         ctx.fillRect(postX - 3, postY + 2, 6, 4);
         ctx.fillRect(postX - 3, postY + 8, 6, 4);
 
-        // Push button box on primary post
-        if (post.isPrimary) {
+        const isPrimaryForApproach = this.isWalkingHome ? !post.isPrimary : post.isPrimary;
+
+        // Push button box on primary/approaching post
+        if (isPrimaryForApproach) {
           const btnActive = zone.pedestrianButtonPressed;
           // Pedestrian Push Button Box (Accessible Pedestrian Signal plate)
           const pBoxW = 16;
@@ -3607,8 +3724,9 @@ class PedestrianGame {
           ctx.stroke();
 
           // Pulsing prompt beacon if player is near curb and button has not been pressed yet!
+          const approachCurbY = this.isWalkingHome ? zone.northCurbY : zone.southCurbY;
           const distToPlayer = Math.hypot(this.player.x - postX, this.player.y - postY);
-          const isPlayerNear = distToPlayer < 120 || (Math.abs(this.player.y - zone.southCurbY) < 95 && this.player.x > this.pathCenterX - 45);
+          const isPlayerNear = distToPlayer < 120 || (Math.abs(this.player.y - approachCurbY) < 95 && this.player.x > this.pathCenterX - 45);
 
           if (zone.trialType === 'TRAFFIC_LIGHT' && !zone.walkGranted && !btnActive && isPlayerNear) {
             // Ripple ring around button
@@ -3729,9 +3847,10 @@ class PedestrianGame {
           }
         }
 
-        // 3. Floating In-World Child-Friendly Badge above primary signal box
-        if (post.isPrimary) {
-          const distToPlayer = Math.abs(this.player.y - zone.southCurbY);
+        // 3. Floating In-World Child-Friendly Badge above approaching signal box
+        if (isPrimaryForApproach) {
+          const approachCurbY = this.isWalkingHome ? zone.northCurbY : zone.southCurbY;
+          const distToPlayer = Math.abs(this.player.y - approachCurbY);
           if (distToPlayer < 550) {
             ctx.save();
             const badgeY = boxY - 26;
@@ -4595,6 +4714,14 @@ class PedestrianGame {
       ctx.restore();
     }
 
+    // Grocery bag in hand / beside player when walking home
+    if (this.hasGroceries && this.storeBagImage && this.storeBagImage.isLoaded) {
+      ctx.save();
+      const bagBob = this.player.isWalking ? Math.sin(this.player.walkAnimFrame * 2) * 2.5 : 0;
+      ctx.drawImage(this.storeBagImage, 10, -8 + bagBob, 28, 28);
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 
@@ -4659,45 +4786,45 @@ class PedestrianGame {
   // ==========================================================================
   getStoreCatalog() {
     return [
-      // Left Wall Produce Shelves (x: 195)
-      { id: 'apple', file: '01_apple.png', name: 'Red Apple', category: 'produce', price: 1.00, shelfX: 195, shelfY: 290 },
-      { id: 'bananas', file: '02_bananas.png', name: 'Fresh Bananas', category: 'produce', price: 1.25, shelfX: 195, shelfY: 360 },
-      { id: 'orange', file: '03_orange.png', name: 'Juicy Orange', category: 'produce', price: 1.00, shelfX: 195, shelfY: 430 },
-      { id: 'grapes', file: '04_grapes.png', name: 'Purple Grapes', category: 'produce', price: 2.50, shelfX: 195, shelfY: 500 },
-      { id: 'strawberries', file: '05_strawberries.png', name: 'Sweet Strawberries', category: 'produce', price: 3.00, shelfX: 195, shelfY: 570 },
-      { id: 'carrot', file: '09_carrot.png', name: 'Crunchy Carrot', category: 'produce', price: 0.80, shelfX: 195, shelfY: 640 },
-      { id: 'broccoli', file: '10_broccoli.png', name: 'Fresh Broccoli', category: 'produce', price: 1.50, shelfX: 195, shelfY: 710 },
+      // Left Wall Produce Shelves (dark grey shelf x: 110)
+      { id: 'apple', file: '01_apple.png', name: 'Red Apple', category: 'produce', price: 1.00, shelfX: 110, shelfY: 290 },
+      { id: 'bananas', file: '02_bananas.png', name: 'Fresh Bananas', category: 'produce', price: 1.25, shelfX: 110, shelfY: 360 },
+      { id: 'orange', file: '03_orange.png', name: 'Juicy Orange', category: 'produce', price: 1.00, shelfX: 110, shelfY: 430 },
+      { id: 'grapes', file: '04_grapes.png', name: 'Purple Grapes', category: 'produce', price: 2.50, shelfX: 110, shelfY: 500 },
+      { id: 'strawberries', file: '05_strawberries.png', name: 'Sweet Strawberries', category: 'produce', price: 3.00, shelfX: 110, shelfY: 570 },
+      { id: 'carrot', file: '09_carrot.png', name: 'Crunchy Carrot', category: 'produce', price: 0.80, shelfX: 110, shelfY: 640 },
+      { id: 'broccoli', file: '10_broccoli.png', name: 'Fresh Broccoli', category: 'produce', price: 1.50, shelfX: 110, shelfY: 710 },
 
-      // Top Glass Cooler (y: 135)
-      { id: 'milk_carton', file: '23_milk_carton.png', name: 'Fresh Milk', category: 'cooler', price: 2.50, shelfX: 230, shelfY: 135 },
-      { id: 'cheese_wedge', file: '24_cheese_wedge.png', name: 'Cheddar Cheese', category: 'cooler', price: 3.25, shelfX: 330, shelfY: 135 },
-      { id: 'strawberry_yogurt', file: '25_strawberry_yogurt.png', name: 'Strawberry Yogurt', category: 'cooler', price: 1.50, shelfX: 430, shelfY: 135 },
-      { id: 'water_bottle', file: '27_water_bottle.png', name: 'Spring Water', category: 'cooler', price: 1.00, shelfX: 530, shelfY: 135 },
-      { id: 'orange_juice', file: '28_orange_juice.png', name: 'Orange Juice', category: 'cooler', price: 2.75, shelfX: 630, shelfY: 135 },
-      { id: 'ice_cream_tub', file: '49_ice_cream_tub.png', name: 'Ice Cream Tub', category: 'cooler', price: 4.00, shelfX: 730, shelfY: 135 },
-      { id: 'pizza_box', file: '50_pizza_box.png', name: 'Frozen Pizza', category: 'cooler', price: 5.50, shelfX: 830, shelfY: 135 },
+      // Top Wall Glass Cooler Display (dark grey cooler y: 155)
+      { id: 'milk_carton', file: '23_milk_carton.png', name: 'Fresh Milk', category: 'cooler', price: 2.50, shelfX: 300, shelfY: 155 },
+      { id: 'cheese_wedge', file: '24_cheese_wedge.png', name: 'Cheddar Cheese', category: 'cooler', price: 3.25, shelfX: 380, shelfY: 155 },
+      { id: 'strawberry_yogurt', file: '25_strawberry_yogurt.png', name: 'Strawberry Yogurt', category: 'cooler', price: 1.50, shelfX: 460, shelfY: 155 },
+      { id: 'water_bottle', file: '27_water_bottle.png', name: 'Spring Water', category: 'cooler', price: 1.00, shelfX: 540, shelfY: 155 },
+      { id: 'orange_juice', file: '28_orange_juice.png', name: 'Orange Juice', category: 'cooler', price: 2.75, shelfX: 620, shelfY: 155 },
+      { id: 'ice_cream_tub', file: '49_ice_cream_tub.png', name: 'Ice Cream Tub', category: 'cooler', price: 4.00, shelfX: 680, shelfY: 155 },
 
-      // Center Island 1 (Pantry & Grains, x: 405)
-      { id: 'sliced_bread', file: '18_sliced_bread.png', name: 'Sliced Bread', category: 'pantry', price: 2.00, shelfX: 405, shelfY: 290 },
-      { id: 'cereal_box', file: '29_cereal_box.png', name: 'Cereal Box', category: 'pantry', price: 3.50, shelfX: 405, shelfY: 370 },
-      { id: 'pasta_box', file: '30_pasta_box.png', name: 'Italian Pasta', category: 'pantry', price: 1.50, shelfX: 405, shelfY: 450 },
-      { id: 'peanut_butter', file: '36_peanut_butter.png', name: 'Peanut Butter', category: 'pantry', price: 2.80, shelfX: 405, shelfY: 530 },
-      { id: 'strawberry_jam', file: '37_strawberry_jam.png', name: 'Strawberry Jam', category: 'pantry', price: 2.40, shelfX: 405, shelfY: 610 },
-      { id: 'honey_jar', file: '38_honey_jar.png', name: 'Pure Clover Honey', category: 'pantry', price: 3.80, shelfX: 405, shelfY: 690 },
+      // Center-Left Island Shelf (dark grey island x: 318)
+      { id: 'sliced_bread', file: '18_sliced_bread.png', name: 'Sliced Bread', category: 'pantry', price: 2.00, shelfX: 318, shelfY: 300 },
+      { id: 'cereal_box', file: '29_cereal_box.png', name: 'Cereal Box', category: 'pantry', price: 3.50, shelfX: 318, shelfY: 380 },
+      { id: 'pasta_box', file: '30_pasta_box.png', name: 'Italian Pasta', category: 'pantry', price: 1.50, shelfX: 318, shelfY: 460 },
+      { id: 'peanut_butter', file: '36_peanut_butter.png', name: 'Peanut Butter', category: 'pantry', price: 2.80, shelfX: 318, shelfY: 540 },
+      { id: 'strawberry_jam', file: '37_strawberry_jam.png', name: 'Strawberry Jam', category: 'pantry', price: 2.40, shelfX: 318, shelfY: 620 },
+      { id: 'honey_jar', file: '38_honey_jar.png', name: 'Pure Clover Honey', category: 'pantry', price: 3.80, shelfX: 318, shelfY: 700 },
 
-      // Center Island 2 (Bakery & Snacks, x: 625)
-      { id: 'croissant', file: '20_croissant.png', name: 'Golden Croissant', category: 'bakery', price: 1.80, shelfX: 625, shelfY: 290 },
-      { id: 'baguette', file: '19_baguette.png', name: 'French Baguette', category: 'bakery', price: 2.20, shelfX: 625, shelfY: 370 },
-      { id: 'pasta_sauce', file: '41_pasta_sauce_jar.png', name: 'Pasta Sauce Jar', category: 'canned', price: 2.30, shelfX: 625, shelfY: 450 },
-      { id: 'potato_chips', file: '45_potato_chips.png', name: 'Crispy Chips', category: 'snacks', price: 1.95, shelfX: 625, shelfY: 530 },
-      { id: 'chocolate_bar', file: '47_chocolate_bar.png', name: 'Chocolate Bar', category: 'snacks', price: 1.25, shelfX: 625, shelfY: 610 },
-      { id: 'cookies', file: '48_cookies_package.png', name: 'Chocolate Cookies', category: 'snacks', price: 2.60, shelfX: 625, shelfY: 690 },
+      // Center-Right Island Shelf (dark grey island x: 702)
+      { id: 'croissant', file: '20_croissant.png', name: 'Golden Croissant', category: 'bakery', price: 1.80, shelfX: 702, shelfY: 300 },
+      { id: 'baguette', file: '19_baguette.png', name: 'French Baguette', category: 'bakery', price: 2.20, shelfX: 702, shelfY: 370 },
+      { id: 'pasta_sauce', file: '41_pasta_sauce_jar.png', name: 'Pasta Sauce Jar', category: 'canned', price: 2.30, shelfX: 702, shelfY: 440 },
+      { id: 'potato_chips', file: '45_potato_chips.png', name: 'Crispy Chips', category: 'snacks', price: 1.95, shelfX: 702, shelfY: 510 },
+      { id: 'chocolate_bar', file: '47_chocolate_bar.png', name: 'Chocolate Bar', category: 'snacks', price: 1.25, shelfX: 702, shelfY: 570 },
 
-      // Right Wall Shelves (Household & Treats, x: 835)
-      { id: 'donut', file: '21_donut.png', name: 'Glazed Donut', category: 'bakery', price: 1.20, shelfX: 835, shelfY: 290 },
-      { id: 'canned_beans', file: '40_canned_beans.png', name: 'Canned Beans', category: 'canned', price: 1.10, shelfX: 835, shelfY: 370 },
-      { id: 'dish_soap', file: '55_dish_soap.png', name: 'Dish Soap', category: 'household', price: 2.20, shelfX: 835, shelfY: 450 },
-      { id: 'paper_towels', file: '54_paper_towels.png', name: 'Paper Towels', category: 'household', price: 2.80, shelfX: 835, shelfY: 530 }
+      // Right Wall Shelves (dark grey shelf x: 920)
+      { id: 'donut', file: '21_donut.png', name: 'Glazed Donut', category: 'bakery', price: 1.20, shelfX: 920, shelfY: 240 },
+      { id: 'cookies', file: '48_cookies_package.png', name: 'Chocolate Cookies', category: 'snacks', price: 2.60, shelfX: 920, shelfY: 310 },
+      { id: 'canned_beans', file: '40_canned_beans.png', name: 'Canned Beans', category: 'canned', price: 1.10, shelfX: 920, shelfY: 380 },
+      { id: 'dish_soap', file: '55_dish_soap.png', name: 'Dish Soap', category: 'household', price: 2.20, shelfX: 920, shelfY: 450 },
+      { id: 'paper_towels', file: '54_paper_towels.png', name: 'Paper Towels', category: 'household', price: 2.80, shelfX: 920, shelfY: 520 },
+      { id: 'pizza_box', file: '50_pizza_box.png', name: 'Frozen Pizza', category: 'cooler', price: 5.50, shelfX: 920, shelfY: 590 }
     ];
   }
 
@@ -4731,7 +4858,7 @@ class PedestrianGame {
     // Choose 3 distinct items for the shopping list
     const produceList = this.storeItems.filter(i => i.category === 'produce');
     const coolerList = this.storeItems.filter(i => i.category === 'cooler');
-    const dryList = this.storeItems.filter(i => ['pantry', 'bakery', 'snacks'].includes(i.category));
+    const dryList = this.storeItems.filter(i => ['pantry', 'bakery', 'snacks', 'household'].includes(i.category));
 
     const item1 = produceList[Math.floor(Math.random() * produceList.length)];
     const item2 = coolerList[Math.floor(Math.random() * coolerList.length)];
@@ -4800,20 +4927,27 @@ class PedestrianGame {
   isStorePositionBlocked(x, y) {
     const r = 16;
     // Store outer walls
-    if (x - r < 120 || x + r > 910) return true;
-    if (y - r < 180) return true;
-    if (y + r > 930) {
+    if (x - r < 55 || x + r > 965) return true;
+    if (y - r < 120) return true;
+    if (y + r > 925) {
       // Allow entrance doorway: x in 440..584
       if (x - r < 440 || x + r > 584 || y + r > 970) return true;
     }
 
-    // Interior shelf obstacles & counter
+    // Interior shelf obstacles & counter with open walkable aisles
+    // 1. Left Wall Shelf: x: 75..145, y: 260..740
+    // 2. Center-Left Island: x: 285..350, y: 275..730
+    // 3. Center-Right Island: x: 670..735, y: 275..625
+    // 4. Right Wall Shelf: x: 885..955, y: 210..620
+    // 5. Top Wall Cooler: x: 260..720, y: 120..175
+    // 6. Cashier Counter: x: 735..965, y: 735..890
     const obstacles = [
-      { x1: 155, x2: 235, y1: 260, y2: 760 },
-      { x1: 365, x2: 445, y1: 260, y2: 740 },
-      { x1: 585, x2: 665, y1: 260, y2: 740 },
-      { x1: 795, x2: 875, y1: 260, y2: 660 },
-      { x1: 690, x2: 915, y1: 720, y2: 885 }
+      { x1: 75, x2: 145, y1: 260, y2: 740 },
+      { x1: 285, x2: 350, y1: 275, y2: 730 },
+      { x1: 670, x2: 735, y1: 275, y2: 625 },
+      { x1: 885, x2: 955, y1: 210, y2: 620 },
+      { x1: 260, x2: 720, y1: 120, y2: 175 },
+      { x1: 735, x2: 965, y1: 735, y2: 890 }
     ];
 
     for (let obs of obstacles) {
@@ -4840,7 +4974,7 @@ class PedestrianGame {
   }
 
   isNearCashier() {
-    return Math.hypot(this.player.x - 700, this.player.y - 800) < 100;
+    return Math.hypot(this.player.x - 660, this.player.y - 800) < 95;
   }
 
   collectStoreItem(item) {
@@ -4875,10 +5009,10 @@ class PedestrianGame {
       this.showInWorldFeedback(`Cashier: "You still need: ${names}! Check the shelves!" 🛒`, '#dc2626');
       return;
     }
-    this.checkoutStore();
+    this.openCheckoutMinigame();
   }
 
-  checkoutStore() {
+  openCheckoutMinigame() {
     this.state = 'STORE_CHECKOUT';
     this.player.isWalking = false;
     this.keys.up = false;
@@ -4886,54 +5020,399 @@ class PedestrianGame {
     this.keys.left = false;
     this.keys.right = false;
     this.mouseControl.isDown = false;
-
-    sfx.cashRegister();
-
-    const container = document.getElementById('receipt-items-container');
-    if (container) {
-      container.innerHTML = '';
-      let total = 0;
-      this.shoppingList.forEach(item => {
-        total += item.price;
-        const row = document.createElement('div');
-        row.className = 'receipt-item-row';
-        row.innerHTML = `
-          <div class="receipt-item-left">
-            <img src="assets/shopping/items/${item.file}" alt="${item.name}" class="receipt-item-thumb">
-            <span>${item.name}</span>
-          </div>
-          <span class="receipt-item-price">$${item.price.toFixed(2)}</span>
-        `;
-        container.appendChild(row);
-      });
-      const countEl = document.getElementById('receipt-count-val');
-      const priceEl = document.getElementById('receipt-price-val');
-      if (countEl) countEl.textContent = `${this.shoppingList.length}`;
-      if (priceEl) priceEl.textContent = `$${total.toFixed(2)}`;
-    }
-
-    this.confettiParticles = [];
-    const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
-    for (let i = 0; i < 90; i++) {
-      this.confettiParticles.push({
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * -this.canvas.height * 0.5,
-        vx: (Math.random() - 0.5) * 4,
-        vy: 2 + Math.random() * 4,
-        vRot: (Math.random() - 0.5) * 0.2,
-        rotation: Math.random() * Math.PI,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: 8 + Math.random() * 8
-      });
-    }
+    this.resetButtonStyles();
 
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
     if (this.storeHud) this.storeHud.classList.add('hidden');
-    if (this.checkoutModal) this.checkoutModal.classList.remove('hidden');
 
+    const modal = document.getElementById('checkout-minigame-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+
+    // Stage 1 Setup: Barcode Scanner Conveyor Belt
+    const stageScan = document.getElementById('checkout-stage-scan');
+    const stagePay = document.getElementById('checkout-stage-pay');
+    const stageBag = document.getElementById('checkout-stage-bag');
+    const stepBadge = document.getElementById('terminal-step-badge');
+    const itemsRow = document.getElementById('conveyor-items-row');
+    const scanCountEl = document.getElementById('scan-progress-count');
+    const scanTotalEl = document.getElementById('scan-running-total');
+
+    if (stageScan) stageScan.classList.remove('hidden');
+    if (stagePay) stagePay.classList.add('hidden');
+    if (stageBag) stageBag.classList.add('hidden');
+    if (stepBadge) stepBadge.textContent = 'STEP 1: SCAN ITEMS 🏷️';
+
+    let scannedCount = 0;
+    let runningTotal = 0;
+    const totalItems = this.shoppingList.length;
+
+    if (scanCountEl) scanCountEl.textContent = `0 / ${totalItems}`;
+    if (scanTotalEl) scanTotalEl.textContent = '$0.00';
+
+    if (itemsRow) {
+      itemsRow.innerHTML = '';
+      this.shoppingList.forEach(item => {
+        const itemBtn = document.createElement('button');
+        itemBtn.className = 'conveyor-item-btn';
+        itemBtn.innerHTML = `
+          <img src="assets/shopping/items/${item.file}" alt="${item.name}" class="conveyor-item-img">
+          <span class="conveyor-item-name">${item.name}</span>
+          <span class="conveyor-item-price">$${item.price.toFixed(2)}</span>
+          <span class="conveyor-item-status">TAP SCAN</span>
+        `;
+
+        itemBtn.addEventListener('click', () => {
+          if (itemBtn.classList.contains('scanned')) return;
+          itemBtn.classList.add('scanned');
+          const statusEl = itemBtn.querySelector('.conveyor-item-status');
+          if (statusEl) statusEl.textContent = 'SCANNED ✅';
+
+          sfx.barcodeScan();
+          scannedCount++;
+          runningTotal += item.price;
+
+          if (scanCountEl) scanCountEl.textContent = `${scannedCount} / ${totalItems}`;
+          if (scanTotalEl) scanTotalEl.textContent = `$${runningTotal.toFixed(2)}`;
+
+          if (scannedCount >= totalItems) {
+            setTimeout(() => {
+              sfx.cashRegister();
+              this.showCheckoutPaymentStage(runningTotal);
+            }, 650);
+          }
+        });
+
+        itemsRow.appendChild(itemBtn);
+      });
+    }
+
+    sfx.doorChime();
+  }
+
+  showCheckoutPaymentStage(totalDue) {
+    const stageScan = document.getElementById('checkout-stage-scan');
+    const stagePay = document.getElementById('checkout-stage-pay');
+    const stepBadge = document.getElementById('terminal-step-badge');
+    const dueEl = document.getElementById('register-due-val');
+    const paidEl = document.getElementById('register-paid-val');
+    const statusEl = document.getElementById('register-status-msg');
+
+    if (stageScan) stageScan.classList.add('hidden');
+    if (stagePay) stagePay.classList.remove('hidden');
+    if (stepBadge) stepBadge.textContent = 'STEP 2: PAYMENT 💳';
+
+    this.checkoutTotalDue = totalDue;
+    this.checkoutPaidSoFar = 0;
+
+    if (dueEl) dueEl.textContent = `$${totalDue.toFixed(2)}`;
+    if (paidEl) paidEl.textContent = '$0.00';
+    if (statusEl) statusEl.textContent = 'Tap money or card below to pay!';
+  }
+
+  handleCheckoutMoneyInput(amount) {
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue) return;
+
+    this.checkoutPaidSoFar += amount;
+    const paidEl = document.getElementById('register-paid-val');
+    const statusEl = document.getElementById('register-status-msg');
+
+    if (paidEl) paidEl.textContent = `$${this.checkoutPaidSoFar.toFixed(2)}`;
+
+    if (amount >= 1.00) {
+      sfx.playTone(392, 'sine', 0.12, 0.15);
+      setTimeout(() => sfx.coinClink(), 100);
+    } else {
+      sfx.coinClink();
+    }
+
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.001) {
+      const change = Math.max(0, this.checkoutPaidSoFar - this.checkoutTotalDue);
+      if (statusEl) {
+        if (change > 0.01) {
+          statusEl.textContent = `PAID! 🪙 Change: $${change.toFixed(2)}! Packaging groceries...`;
+        } else {
+          statusEl.textContent = 'PAID IN FULL! Exact change! ✨ Packaging groceries...';
+        }
+      }
+      sfx.cashRegister();
+      setTimeout(() => {
+        sfx.fanfare();
+        this.showCheckoutBagStage();
+      }, 750);
+    } else {
+      const remaining = this.checkoutTotalDue - this.checkoutPaidSoFar;
+      if (statusEl) {
+        statusEl.textContent = `Remaining due: $${remaining.toFixed(2)} 💵`;
+      }
+    }
+  }
+
+  handleCheckoutCardTap() {
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue) return;
+    this.checkoutPaidSoFar = this.checkoutTotalDue;
+    const paidEl = document.getElementById('register-paid-val');
+    const statusEl = document.getElementById('register-status-msg');
+
+    if (paidEl) paidEl.textContent = `$${this.checkoutPaidSoFar.toFixed(2)}`;
+    if (statusEl) statusEl.textContent = '💳 CARD APPROVED! Exact payment! Packaging groceries...';
+
+    sfx.walkSignalChirp();
     setTimeout(() => {
+      sfx.cashRegister();
       sfx.fanfare();
-    }, 450);
+      this.showCheckoutBagStage();
+    }, 700);
+  }
+
+  showCheckoutBagStage() {
+    const stagePay = document.getElementById('checkout-stage-pay');
+    const stageBag = document.getElementById('checkout-stage-bag');
+    const stepBadge = document.getElementById('terminal-step-badge');
+
+    if (stagePay) stagePay.classList.add('hidden');
+    if (stageBag) stageBag.classList.remove('hidden');
+    if (stepBadge) stepBadge.textContent = 'STEP 3: READY TO WALK HOME! 🛍️';
+  }
+
+  startWalkHome() {
+    const minigameModal = document.getElementById('checkout-minigame-modal');
+    if (minigameModal) minigameModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.storeHud) this.storeHud.classList.add('hidden');
+
+    this.isWalkingHome = true;
+    this.hasGroceries = true;
+    this.state = 'WALKING_HOME_SIDEWALK';
+
+    // Position player just outside store entrance at the north sidewalk
+    this.player.x = this.pathCenterX;
+    this.player.y = this.destinationY + 36;
+    this.player.facing = 'down';
+    this.player.isWalking = false;
+    this.player.isFalling = false;
+    this.player.withGroup = false;
+    this.player.onBridge = false;
+    this.player.walkAnimFrame = 0;
+
+    // Reset keyboard and pointer
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.mouseControl.isDown = false;
+    this.mouseControl.targetWorldX = null;
+    this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
+
+    // Start return crossings from top-most road down to 0
+    this.returnCrossingIndex = this.numTrials - 1;
+
+    // Reset traffic and crossing signal states for return trip
+    this.crossingZones.forEach(zone => {
+      zone.walkGranted = false;
+      zone.waitTime = 0;
+      zone.pedestrianButtonPressed = false;
+      zone.carsHalted = false;
+      if (zone.hasBridge) {
+        zone.signalState = 'NO_CROSSWALK';
+      } else {
+        zone.signalState = 'STOP';
+      }
+      if (zone.hasCrossingGuard) {
+        const guard = zone.crossingGuard || this.crossingGuard;
+        if (guard) {
+          guard.state = 'WAIT_ON_CURB';
+          guard.x = this.pathCenterX + 44;
+          guard.y = zone.northCurbY - 14;
+          guard.targetX = this.pathCenterX + 44;
+          guard.targetY = zone.northCurbY - 14;
+          guard.whistlePlayed = false;
+        }
+      }
+    });
+
+    if (this.walkingControls) this.walkingControls.classList.remove('hidden');
+    if (this.gameHud) this.gameHud.classList.remove('hidden');
+    if (this.progressHud) this.progressHud.classList.remove('hidden');
+
+    if (this.destinationIconEl) this.destinationIconEl.textContent = '🏡';
+    if (this.destinationTextEl) this.destinationTextEl.textContent = 'Heading Back Home with Groceries 🏡🛍️';
+    if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🏡 Home';
+
+    this.cameraY = this.player.y - (this.canvas.height / this.scale) * 0.55;
+    this.updateProgressBar();
+
+    sfx.fanfare();
+    this.showInWorldFeedback('🛍️ Groceries secured! Now walk safely back HOME! 🏡', '#15803d');
+  }
+
+  updateWalkHome(dt) {
+    // Cannot walk north past the store
+    if (this.player.y < this.destinationY) {
+      this.player.y = this.destinationY;
+    }
+
+    // Return Crossing check
+    const currentZone = this.crossingZones[this.returnCrossingIndex];
+    if (this.returnCrossingIndex >= 0 && currentZone) {
+      // 1. Footbridge Road Crossing (if applicable)
+      if (currentZone.hasBridge) {
+        const bridge = currentZone.bridge || this.pedestrianBridge;
+        const isAtBridgeStairs = (
+          this.player.y >= currentZone.northCurbY - 46 &&
+          this.player.y <= currentZone.southCurbY + 46 &&
+          Math.abs(this.player.x - bridge.x) <= 38
+        );
+        if (isAtBridgeStairs) {
+          this.player.onBridge = true;
+          this.player.x = Math.max(bridge.x - 26, Math.min(bridge.x + 26, this.player.x));
+          if (this.player.y > currentZone.northCurbY) {
+            this.state = 'CROSSING_ROAD_HOME';
+          }
+        } else {
+          // If player steps directly onto road without using bridge:
+          if (this.player.y > currentZone.northCurbY && this.player.y < currentZone.southCurbY && !this.player.onBridge) {
+            this.triggerPlayerFallFromDangerousRoad(currentZone);
+            return;
+          }
+        }
+
+        // Reached south curb over bridge!
+        if (this.player.y >= currentZone.southCurbY + 25) {
+          this.player.onBridge = false;
+          this.returnCrossingIndex--;
+          this.state = 'WALKING_HOME_SIDEWALK';
+          sfx.correct();
+          this.showInWorldFeedback('🌉 Crossed footbridge safely south! 🛍️', '#15803d');
+        }
+      } else {
+        // Standard Signal or Crossing Guard
+        const isNearNorthCurb = (this.player.y >= currentZone.northCurbY - 80 && this.player.y <= currentZone.northCurbY + 4);
+
+        if (currentZone.signalState !== 'WALK') {
+          // SAFE WAITING ON SIDEWALK:
+          const isWalkingIntoRoad = (this.keys.down || (this.mouseControl.isDown && this.mouseControl.targetWorldY > currentZone.northCurbY));
+          if (isNearNorthCurb && !isWalkingIntoRoad) {
+            if (currentZone.hasCrossingGuard) {
+              const guard = currentZone.crossingGuard || this.crossingGuard;
+              if (guard && (guard.state === 'IN_STREET' || guard.state === 'STOPPING_TRAFFIC')) {
+                currentZone.signalState = 'WALK';
+                currentZone.walkGranted = true;
+                currentZone.carsHalted = true;
+              }
+            } else {
+              // Push button wait
+              if (currentZone.pedestrianButtonPressed) {
+                currentZone.waitTime = (currentZone.waitTime || 0) + dt;
+                if (currentZone.waitTime >= 2.0 && !currentZone.walkGranted) {
+                  currentZone.signalState = 'WALK';
+                  currentZone.walkGranted = true;
+                  currentZone.carsHalted = true;
+                  sfx.walkSignalChirp();
+                  sfx.correct();
+                  this.safetyStars++;
+                  if (this.starCountEl) this.starCountEl.textContent = this.safetyStars;
+                  this.showInWorldFeedback('🟢 Walk sign is on! Safe to cross south! 🚶', '#2e7d32');
+                }
+              }
+            }
+          }
+
+          // WRONG TIME CHECK: Player walks south into road when signal is NOT WALK!
+          if (this.player.y > currentZone.northCurbY && this.player.y < currentZone.southCurbY) {
+            this.triggerPlayerFall(currentZone);
+            return;
+          }
+        } else {
+          // Signal is WALK!
+          if (this.player.y > currentZone.northCurbY && this.player.y < currentZone.southCurbY) {
+            this.state = 'CROSSING_ROAD_HOME';
+          }
+        }
+
+        // Crossing reached south curb:
+        if (this.state === 'CROSSING_ROAD_HOME' && this.player.y >= currentZone.southCurbY) {
+          this.player.y = currentZone.southCurbY;
+          this.returnCrossingIndex--;
+          this.state = 'WALKING_HOME_SIDEWALK';
+          sfx.correct();
+          this.showInWorldFeedback('✅ Safely across south! Heading home! 🏡', '#16a34a');
+        }
+      }
+    }
+
+    // Check Home arrival
+    if (this.returnCrossingIndex < 0 && this.player.y >= this.startY) {
+      this.player.y = this.startY;
+      this.player.isWalking = false;
+      this.mouseControl.isDown = false;
+      this.state = 'WALKING_HOME_TO_DOOR';
+      this.triggerHomeVictory();
+      return;
+    }
+
+    this.updateProgressBar();
+  }
+
+  triggerHomeVictory() {
+    this.state = 'VICTORY';
+    this.player.isWalking = false;
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.mouseControl.isDown = false;
+    this.resetButtonStyles();
+
+    if (this.walkingControls) this.walkingControls.classList.add('hidden');
+    if (this.gameHud) this.gameHud.classList.add('hidden');
+    if (this.progressHud) this.progressHud.classList.add('hidden');
+
+    const homeModal = document.getElementById('home-victory-modal');
+    if (homeModal) homeModal.classList.remove('hidden');
+
+    const deliveredItemsContainer = document.getElementById('home-delivered-items');
+    if (deliveredItemsContainer && this.shoppingList) {
+      deliveredItemsContainer.innerHTML = '';
+      this.shoppingList.forEach(item => {
+        const pill = document.createElement('div');
+        pill.className = 'delivered-item-pill animate-pop';
+        pill.innerHTML = `
+          <img src="assets/shopping/items/${item.file}" alt="${item.name}" class="delivered-item-thumb">
+          <span class="delivered-item-name">${item.name}</span>
+        `;
+        deliveredItemsContainer.appendChild(pill);
+      });
+    }
+
+    const starsEl = document.getElementById('home-stat-stars');
+    if (starsEl) starsEl.textContent = `${this.safetyStars} / 5`;
+
+    this.confettiParticles = [];
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+    for (let i = 0; i < 110; i++) {
+      this.confettiParticles.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * -this.canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 5,
+        vy: 2 + Math.random() * 5,
+        vRot: (Math.random() - 0.5) * 0.25,
+        rotation: Math.random() * Math.PI,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 9 + Math.random() * 9
+      });
+    }
+
+    sfx.fanfare();
+  }
+
+  startLevel2StoreGame() {
+    if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+    if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    this.setLevel(2);
+    this.startGame();
   }
 
   handleStoreAction() {
@@ -4955,7 +5434,7 @@ class PedestrianGame {
     for (const item of this.storeItems) {
       if (item.collected) continue;
       const dist = Math.hypot(worldX - item.shelfX, worldY - item.shelfY);
-      if (dist < 36) {
+      if (dist < 40) {
         const playerDist = Math.hypot(this.player.x - item.shelfX, this.player.y - item.shelfY);
         if (playerDist < 95) {
           this.collectStoreItem(item);
@@ -4967,8 +5446,8 @@ class PedestrianGame {
   }
 
   checkStoreCashierClick(worldX, worldY) {
-    const distToCounter = Math.hypot(worldX - 700, worldY - 800);
-    if (distToCounter < 60) {
+    const distToCounter = Math.hypot(worldX - 660, worldY - 800);
+    if (distToCounter < 90) {
       if (this.isNearCashier()) {
         this.interactWithCashier();
         return true;
@@ -5056,7 +5535,7 @@ class PedestrianGame {
       ctx.fillRect(0, 0, 1024, 1024);
     }
 
-    // 2. Draw shelf items
+    // 2. Draw shelf items (Enlarged 48x48 with shelf shadows & golden auras)
     if (this.storeItems) {
       const now = Date.now();
       for (const item of this.storeItems) {
@@ -5064,39 +5543,51 @@ class PedestrianGame {
           // Subtle collected mark on shelf
           ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
           ctx.beginPath();
-          ctx.arc(item.shelfX, item.shelfY, 14, 0, Math.PI * 2);
+          ctx.arc(item.shelfX, item.shelfY, 16, 0, Math.PI * 2);
           ctx.fill();
           ctx.fillStyle = '#16a34a';
-          ctx.font = '16px sans-serif';
+          ctx.font = 'bold 20px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('✅', item.shelfX, item.shelfY);
+          ctx.fillText('✓', item.shelfX, item.shelfY);
           continue;
         }
 
-        // Golden aura if on player's shopping list
+        // Soft shelf drop shadow directly underneath item
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(item.shelfX, item.shelfY + 18, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pulsing golden aura if on player's shopping list
         if (item.onList) {
-          const auraRadius = 20 + Math.sin(now * 0.006) * 4;
-          ctx.fillStyle = 'rgba(234, 179, 8, 0.45)';
+          const auraRadius = 28 + Math.sin(now * 0.007) * 4;
+          ctx.fillStyle = 'rgba(234, 179, 8, 0.35)';
           ctx.beginPath();
           ctx.arc(item.shelfX, item.shelfY, auraRadius, 0, Math.PI * 2);
           ctx.fill();
 
           ctx.strokeStyle = '#ca8a04';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.arc(item.shelfX, item.shelfY, auraRadius, 0, Math.PI * 2);
           ctx.stroke();
+
+          // Sparkle icon floating above item
+          const sparkY = item.shelfY - 30 + Math.sin(now * 0.008) * 3;
+          ctx.font = '14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('✨', item.shelfX, sparkY);
         }
 
-        // Draw item thumbnail
+        // Draw enlarged item thumbnail (48x48 pixels)
         const img = this.shoppingItemImages[item.file];
         if (img && img.isLoaded) {
-          ctx.drawImage(img, item.shelfX - 18, item.shelfY - 18, 36, 36);
+          ctx.drawImage(img, item.shelfX - 24, item.shelfY - 24, 48, 48);
         } else {
           ctx.fillStyle = '#3b82f6';
           ctx.beginPath();
-          ctx.arc(item.shelfX, item.shelfY, 12, 0, Math.PI * 2);
+          ctx.arc(item.shelfX, item.shelfY, 16, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -5106,14 +5597,14 @@ class PedestrianGame {
     const remainingCount = this.shoppingList ? this.shoppingList.filter(t => !t.collected).length : 1;
     if (remainingCount === 0) {
       const bounceOffset = Math.sin(Date.now() * 0.008) * 8;
-      const beaconX = 700;
+      const beaconX = 660;
       const beaconY = 740 + bounceOffset;
 
       ctx.save();
       // Pulsing beacon ring around register counter
       ctx.fillStyle = 'rgba(34, 197, 94, 0.35)';
       ctx.beginPath();
-      ctx.arc(700, 800, 38 + Math.sin(Date.now() * 0.006) * 6, 0, Math.PI * 2);
+      ctx.arc(660, 800, 42 + Math.sin(Date.now() * 0.006) * 6, 0, Math.PI * 2);
       ctx.fill();
 
       // Floating beacon tag
@@ -5140,12 +5631,12 @@ class PedestrianGame {
     const nearbyItem = this.getNearbyStoreItem();
     if (nearbyItem) {
       const promptX = nearbyItem.shelfX;
-      const promptY = nearbyItem.shelfY - 28;
+      const promptY = nearbyItem.shelfY - 32;
       const promptText = nearbyItem.onList ? `🧺 [SPACE] Take ${nearbyItem.name}` : `${nearbyItem.name} (Not on list)`;
       const bgColor = nearbyItem.onList ? '#15803d' : '#475569';
       this.drawSpeechBubble(ctx, promptX, promptY, promptText, bgColor);
     } else if (this.isNearCashier()) {
-      const cashierX = 700;
+      const cashierX = 660;
       const cashierY = 770;
       if (remainingCount === 0) {
         this.drawSpeechBubble(ctx, cashierX, cashierY, '💳 [SPACE] Checkout & Pay!', '#15803d');

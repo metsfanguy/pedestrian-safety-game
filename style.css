@@ -1837,14 +1837,29 @@ body, html {
 
 .shopping-clipboard {
   position: relative;
-  background: #fffdfa;
-  border: 2.5px solid #d6c7b2;
+  background: rgba(255, 253, 250, 0.94);
+  backdrop-filter: blur(8px);
+  border: 2px solid #d6c7b2;
   border-radius: 12px;
-  padding: 10px 10px 8px 10px;
+  padding: 8px 10px 8px 10px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
   width: 175px;
   pointer-events: auto;
   user-select: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shopping-clipboard.minimized {
+  width: 140px;
+  padding: 5px 8px;
+}
+
+.shopping-clipboard.minimized .clipboard-clip {
+  display: none;
+}
+
+.shopping-clipboard.minimized .store-list-body {
+  display: none;
 }
 
 .clipboard-clip {
@@ -1863,9 +1878,10 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
   border-bottom: 1.5px dashed #cbd5e1;
+  cursor: pointer;
 }
 
 .shopping-title-row {
@@ -1885,6 +1901,21 @@ body, html {
   letter-spacing: 0.5px;
 }
 
+.header-right-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toggle-list-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
 .store-counter-pill {
   font-size: 0.7rem;
   font-weight: 800;
@@ -1897,6 +1928,10 @@ body, html {
 .store-counter-pill.complete {
   background: #dcfce7;
   color: #15803d;
+}
+
+.store-list-body {
+  transition: opacity 0.2s ease;
 }
 
 .store-checklist {
@@ -1926,8 +1961,8 @@ body, html {
 }
 
 .check-item-img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -1973,127 +2008,390 @@ body, html {
 }
 
 /* ==========================================================================
-   Store Checkout & Receipt Modal
+   Checkout Mini-Game Modal
    ========================================================================== */
-.receipt-card {
+.terminal-card {
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
   padding: 18px 16px;
-  max-width: 400px;
+  max-width: 440px;
   width: 100%;
   text-align: center;
-  border: 3px solid #cbd5e1;
+  border: 3.5px solid #0f172a;
   position: relative;
-  overflow-y: auto;
-  max-height: 94%;
-  font-family: 'Fredoka', monospace, sans-serif;
+  overflow: hidden;
+  font-family: 'Fredoka', sans-serif;
 }
 
-.receipt-store-title {
-  font-size: 1.3rem;
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.terminal-brand-pill {
+  font-size: 0.85rem;
   font-weight: 800;
   color: #15803d;
+  background: #f0fdf4;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+}
+
+.terminal-step-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  background: #eff6ff;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+}
+
+.checkout-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stage-instruction {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 2px;
+}
+
+/* Stage 1: Conveyor Belt */
+.conveyor-container {
+  position: relative;
+  background: linear-gradient(180deg, #334155, #1e293b);
+  border-radius: 12px;
+  padding: 14px 10px;
+  border: 2px solid #475569;
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.conveyor-scanner-beam {
+  position: absolute;
+  top: 4px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.laser-light {
+  height: 2px;
+  background: #ef4444;
+  flex: 1;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.scanner-sensor-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #f87171;
+  margin-left: 8px;
   letter-spacing: 0.5px;
 }
 
-.receipt-sub {
-  font-size: 0.75rem;
+.conveyor-items-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.conveyor-item-btn {
+  background: #ffffff;
+  border: 2.5px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  width: 90px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.conveyor-item-btn:hover {
+  transform: translateY(-4px) scale(1.05);
+  border-color: #3b82f6;
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.4);
+}
+
+.conveyor-item-btn.scanned {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.conveyor-item-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.conveyor-item-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.conveyor-item-price {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.conveyor-item-status {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.conveyor-item-btn.scanned .conveyor-item-status {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.register-running-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.running-total-green {
+  color: #15803d;
+  font-size: 1rem;
+}
+
+/* Stage 2: Payment Screen */
+.register-display-screen {
+  background: #0f172a;
+  border: 3px solid #334155;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #f8fafc;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.register-screen-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.screen-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.screen-val.due-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #4ade80;
+}
+
+.screen-val.paid-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.register-status-msg {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-top: 4px;
+  border-top: 1px dashed #334155;
+  padding-top: 4px;
+}
+
+.money-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.money-btn {
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 10px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.money-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+.money-btn:active {
+  transform: scale(0.95);
+}
+
+.money-emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.money-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.money-sub {
+  font-size: 0.68rem;
   color: #64748b;
   font-weight: 600;
 }
 
-.receipt-date {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  margin-top: 2px;
+.bill-btn {
+  background: #f0fdf4;
+  border-color: #86efac;
 }
 
-.receipt-dashed-line {
-  color: #cbd5e1;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
+.coin-btn {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.card-btn {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+/* Stage 3: Bag Packaging */
+.paid-stamp-box {
   margin: 6px 0;
-  overflow: hidden;
-  white-space: nowrap;
 }
 
-.receipt-items-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  padding: 4px 6px;
-}
-
-.receipt-item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.receipt-item-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.receipt-item-thumb {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-}
-
-.receipt-item-price {
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.receipt-totals-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 6px;
-}
-
-.receipt-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.88rem;
-  color: #475569;
-}
-
-.receipt-total-highlight {
-  font-size: 1.15rem;
-  color: #15803d;
-  border-top: 2px solid #e2e8f0;
-  padding-top: 4px;
-  margin-top: 2px;
-}
-
-.receipt-stamp-container {
-  margin: 10px 0 8px 0;
-}
-
-.receipt-stamp {
+.paid-stamp {
   display: inline-block;
-  padding: 6px 16px;
+  padding: 6px 18px;
   border: 3px dashed #16a34a;
   color: #16a34a;
   font-weight: 800;
-  font-size: 1.05rem;
-  border-radius: 8px;
+  font-size: 1.2rem;
+  border-radius: 10px;
   transform: rotate(-3deg);
   background: #f0fdf4;
   letter-spacing: 0.5px;
 }
 
-.shopper-award {
-  margin-top: 6px;
-  margin-bottom: 12px;
+.bag-handoff-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px;
+  text-align: left;
+}
+
+.bag-handoff-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.bag-handoff-info h3 {
+  font-size: 1rem;
+  color: #0f172a;
+  margin-bottom: 3px;
+}
+
+.bag-handoff-info p {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   Home Arrival Victory Delivered Groceries Card
+   ========================================================================== */
+.delivered-groceries-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.delivered-card-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.delivered-items-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.delivered-item-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 4px 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.delivered-item-thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.delivered-item-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
 .receipt-buttons-row {
@@ -2119,5 +2417,6 @@ body, html {
   background: #e2e8f0;
   transform: translateY(-1px);
 }
+
 
 
