@@ -39,28 +39,23 @@
           </div>
         </div>
 
-        <!-- Store Shopping HUD (Shopping List Clipboard & Goal Banner) -->
+        <!-- Store Shopping HUD (Top Center Bar - Never Blocks Shelves) -->
         <div id="store-hud" class="store-hud hidden">
-          <div class="shopping-clipboard animate-pop" id="shopping-clipboard">
-            <div class="clipboard-clip"></div>
-            <div class="shopping-list-header" id="shopping-list-header" title="Click to minimize or expand">
-              <div class="shopping-title-row">
-                <span class="shopping-icon">📋</span>
-                <span class="shopping-title">GROCERY LIST</span>
-              </div>
-              <div class="header-right-tools">
-                <span id="store-items-counter" class="store-counter-pill">0/3</span>
-                <button id="btn-toggle-list" class="toggle-list-btn" title="Minimize / Expand List">🔽</button>
-              </div>
+          <div class="shopping-top-bar animate-pop" id="shopping-clipboard">
+            <div class="shopping-bar-header" id="shopping-list-header" title="Click to minimize or expand">
+              <span class="shopping-icon">📋</span>
+              <span class="shopping-title">GROCERY LIST</span>
+              <span id="store-items-counter" class="store-counter-pill">0/3</span>
+              <button id="btn-toggle-list" class="toggle-list-btn" title="Minimize / Expand List">➖</button>
             </div>
             <div id="store-list-body" class="store-list-body">
               <div id="store-checklist" class="store-checklist">
                 <!-- Dynamically populated items with checkboxes -->
               </div>
-              <div id="store-goal-banner" class="store-goal-banner">
-                Find the items on the shelves!
-              </div>
             </div>
+          </div>
+          <div id="store-goal-banner" class="store-goal-banner hidden">
+            Find the items on the shelves!
           </div>
         </div>
 

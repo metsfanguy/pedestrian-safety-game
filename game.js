@@ -1261,9 +1261,9 @@ class PedestrianGame {
       });
     }
 
-    // Toggle Shopping List Clipboard Minimize / Expand
+    // Toggle Shopping List Minimize / Expand
     const toggleListBtn = document.getElementById('btn-toggle-list');
-    const shoppingClipboard = document.querySelector('.shopping-clipboard');
+    const shoppingClipboard = document.getElementById('shopping-clipboard');
     if (toggleListBtn && shoppingClipboard) {
       toggleListBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -4794,16 +4794,17 @@ class PedestrianGame {
       { id: 'strawberries', file: '05_strawberries.png', name: 'Sweet Strawberries', category: 'produce', price: 3.00, shelfX: 110, shelfY: 570 },
       { id: 'carrot', file: '09_carrot.png', name: 'Crunchy Carrot', category: 'produce', price: 0.80, shelfX: 110, shelfY: 640 },
       { id: 'broccoli', file: '10_broccoli.png', name: 'Fresh Broccoli', category: 'produce', price: 1.50, shelfX: 110, shelfY: 710 },
+      { id: 'lettuce', file: '11_lettuce.png', name: 'Crisp Lettuce', category: 'produce', price: 1.40, shelfX: 110, shelfY: 775 },
 
       // Top Wall Glass Cooler Display (dark grey cooler y: 155)
-      { id: 'milk_carton', file: '23_milk_carton.png', name: 'Fresh Milk', category: 'cooler', price: 2.50, shelfX: 300, shelfY: 155 },
-      { id: 'cheese_wedge', file: '24_cheese_wedge.png', name: 'Cheddar Cheese', category: 'cooler', price: 3.25, shelfX: 380, shelfY: 155 },
-      { id: 'strawberry_yogurt', file: '25_strawberry_yogurt.png', name: 'Strawberry Yogurt', category: 'cooler', price: 1.50, shelfX: 460, shelfY: 155 },
-      { id: 'water_bottle', file: '27_water_bottle.png', name: 'Spring Water', category: 'cooler', price: 1.00, shelfX: 540, shelfY: 155 },
-      { id: 'orange_juice', file: '28_orange_juice.png', name: 'Orange Juice', category: 'cooler', price: 2.75, shelfX: 620, shelfY: 155 },
-      { id: 'ice_cream_tub', file: '49_ice_cream_tub.png', name: 'Ice Cream Tub', category: 'cooler', price: 4.00, shelfX: 680, shelfY: 155 },
+      { id: 'milk_carton', file: '23_milk_carton.png', name: 'Fresh Milk', category: 'cooler', price: 2.50, shelfX: 310, shelfY: 155 },
+      { id: 'cheese_wedge', file: '24_cheese_wedge.png', name: 'Cheddar Cheese', category: 'cooler', price: 3.25, shelfX: 390, shelfY: 155 },
+      { id: 'strawberry_yogurt', file: '25_strawberry_yogurt.png', name: 'Strawberry Yogurt', category: 'cooler', price: 1.50, shelfX: 470, shelfY: 155 },
+      { id: 'water_bottle', file: '27_water_bottle.png', name: 'Spring Water', category: 'cooler', price: 1.00, shelfX: 550, shelfY: 155 },
+      { id: 'orange_juice', file: '28_orange_juice.png', name: 'Orange Juice', category: 'cooler', price: 2.75, shelfX: 625, shelfY: 155 },
+      { id: 'ice_cream_tub', file: '49_ice_cream_tub.png', name: 'Ice Cream Tub', category: 'cooler', price: 4.00, shelfX: 685, shelfY: 155 },
 
-      // Center-Left Island Shelf (dark grey island x: 318)
+      // Center-Left Island Shelf 1 (dark grey island x: 318)
       { id: 'sliced_bread', file: '18_sliced_bread.png', name: 'Sliced Bread', category: 'pantry', price: 2.00, shelfX: 318, shelfY: 300 },
       { id: 'cereal_box', file: '29_cereal_box.png', name: 'Cereal Box', category: 'pantry', price: 3.50, shelfX: 318, shelfY: 380 },
       { id: 'pasta_box', file: '30_pasta_box.png', name: 'Italian Pasta', category: 'pantry', price: 1.50, shelfX: 318, shelfY: 460 },
@@ -4811,20 +4812,28 @@ class PedestrianGame {
       { id: 'strawberry_jam', file: '37_strawberry_jam.png', name: 'Strawberry Jam', category: 'pantry', price: 2.40, shelfX: 318, shelfY: 620 },
       { id: 'honey_jar', file: '38_honey_jar.png', name: 'Pure Clover Honey', category: 'pantry', price: 3.80, shelfX: 318, shelfY: 700 },
 
-      // Center-Right Island Shelf (dark grey island x: 702)
+      // Center Island Shelf 2 (middle island shelf x: 512)
+      { id: 'rice_bag', file: '31_rice_bag.png', name: 'Rice Bag', category: 'pantry', price: 3.20, shelfX: 512, shelfY: 300 },
+      { id: 'coffee_beans', file: '34_coffee_beans.png', name: 'Coffee Beans', category: 'pantry', price: 4.50, shelfX: 512, shelfY: 380 },
+      { id: 'sugar_bag', file: '33_sugar_bag.png', name: 'Pure Sugar', category: 'pantry', price: 2.10, shelfX: 512, shelfY: 460 },
+      { id: 'ketchup', file: '42_ketchup.png', name: 'Tomato Ketchup', category: 'pantry', price: 1.75, shelfX: 512, shelfY: 540 },
+      { id: 'cooking_oil', file: '44_cooking_oil.png', name: 'Cooking Oil', category: 'pantry', price: 3.60, shelfX: 512, shelfY: 620 },
+      { id: 'crackers_box', file: '46_crackers_box.png', name: 'Golden Crackers', category: 'snacks', price: 2.25, shelfX: 512, shelfY: 700 },
+
+      // Center-Right Island Shelf 3 (dark grey island x: 702)
       { id: 'croissant', file: '20_croissant.png', name: 'Golden Croissant', category: 'bakery', price: 1.80, shelfX: 702, shelfY: 300 },
-      { id: 'baguette', file: '19_baguette.png', name: 'French Baguette', category: 'bakery', price: 2.20, shelfX: 702, shelfY: 370 },
-      { id: 'pasta_sauce', file: '41_pasta_sauce_jar.png', name: 'Pasta Sauce Jar', category: 'canned', price: 2.30, shelfX: 702, shelfY: 440 },
-      { id: 'potato_chips', file: '45_potato_chips.png', name: 'Crispy Chips', category: 'snacks', price: 1.95, shelfX: 702, shelfY: 510 },
-      { id: 'chocolate_bar', file: '47_chocolate_bar.png', name: 'Chocolate Bar', category: 'snacks', price: 1.25, shelfX: 702, shelfY: 570 },
+      { id: 'baguette', file: '19_baguette.png', name: 'French Baguette', category: 'bakery', price: 2.20, shelfX: 702, shelfY: 375 },
+      { id: 'pasta_sauce', file: '41_pasta_sauce_jar.png', name: 'Pasta Sauce Jar', category: 'canned', price: 2.30, shelfX: 702, shelfY: 450 },
+      { id: 'potato_chips', file: '45_potato_chips.png', name: 'Crispy Chips', category: 'snacks', price: 1.95, shelfX: 702, shelfY: 525 },
+      { id: 'chocolate_bar', file: '47_chocolate_bar.png', name: 'Chocolate Bar', category: 'snacks', price: 1.25, shelfX: 702, shelfY: 600 },
 
       // Right Wall Shelves (dark grey shelf x: 920)
-      { id: 'donut', file: '21_donut.png', name: 'Glazed Donut', category: 'bakery', price: 1.20, shelfX: 920, shelfY: 240 },
-      { id: 'cookies', file: '48_cookies_package.png', name: 'Chocolate Cookies', category: 'snacks', price: 2.60, shelfX: 920, shelfY: 310 },
-      { id: 'canned_beans', file: '40_canned_beans.png', name: 'Canned Beans', category: 'canned', price: 1.10, shelfX: 920, shelfY: 380 },
-      { id: 'dish_soap', file: '55_dish_soap.png', name: 'Dish Soap', category: 'household', price: 2.20, shelfX: 920, shelfY: 450 },
-      { id: 'paper_towels', file: '54_paper_towels.png', name: 'Paper Towels', category: 'household', price: 2.80, shelfX: 920, shelfY: 520 },
-      { id: 'pizza_box', file: '50_pizza_box.png', name: 'Frozen Pizza', category: 'cooler', price: 5.50, shelfX: 920, shelfY: 590 }
+      { id: 'donut', file: '21_donut.png', name: 'Glazed Donut', category: 'bakery', price: 1.20, shelfX: 920, shelfY: 250 },
+      { id: 'cookies', file: '48_cookies_package.png', name: 'Chocolate Cookies', category: 'snacks', price: 2.60, shelfX: 920, shelfY: 325 },
+      { id: 'canned_beans', file: '40_canned_beans.png', name: 'Canned Beans', category: 'canned', price: 1.10, shelfX: 920, shelfY: 405 },
+      { id: 'dish_soap', file: '55_dish_soap.png', name: 'Dish Soap', category: 'household', price: 2.20, shelfX: 920, shelfY: 485 },
+      { id: 'paper_towels', file: '54_paper_towels.png', name: 'Paper Towels', category: 'household', price: 2.80, shelfX: 920, shelfY: 565 },
+      { id: 'pizza_box', file: '50_pizza_box.png', name: 'Frozen Pizza', category: 'cooler', price: 5.50, shelfX: 920, shelfY: 635 }
     ];
   }
 
@@ -4838,8 +4847,8 @@ class PedestrianGame {
     this.keys.left = false;
     this.keys.right = false;
 
-    // Reset player position to store entrance
-    this.player.x = 512;
+    // Reset player position to store entrance (directly aligned with aisle 2)
+    this.player.x = 420;
     this.player.y = 910;
     this.player.facing = 'up';
     this.player.isWalking = false;
@@ -4905,9 +4914,11 @@ class PedestrianGame {
       if (collectedCount === this.shoppingList.length) {
         bannerEl.textContent = '🎉 All items found! Go to the cash register to pay! 💳';
         bannerEl.classList.add('goal-ready');
+        bannerEl.classList.remove('hidden');
       } else {
         bannerEl.textContent = 'Find the items on the shelves!';
         bannerEl.classList.remove('goal-ready');
+        bannerEl.classList.add('hidden');
       }
     }
 
@@ -4930,24 +4941,26 @@ class PedestrianGame {
     if (x - r < 55 || x + r > 965) return true;
     if (y - r < 120) return true;
     if (y + r > 925) {
-      // Allow entrance doorway: x in 440..584
-      if (x - r < 440 || x + r > 584 || y + r > 970) return true;
+      // Allow entrance turnstiles: x in 380..640
+      if (x - r < 380 || x + r > 640 || y + r > 970) return true;
     }
 
     // Interior shelf obstacles & counter with open walkable aisles
-    // 1. Left Wall Shelf: x: 75..145, y: 260..740
-    // 2. Center-Left Island: x: 285..350, y: 275..730
-    // 3. Center-Right Island: x: 670..735, y: 275..625
-    // 4. Right Wall Shelf: x: 885..955, y: 210..620
-    // 5. Top Wall Cooler: x: 260..720, y: 120..175
-    // 6. Cashier Counter: x: 735..965, y: 735..890
+    // 1. Left Wall Shelf: x: 70..145, y: 260..800
+    // 2. Island 1 (Pantry): x: 285..350, y: 275..730
+    // 3. Island 2 (Middle Shelf): x: 475..545, y: 275..730
+    // 4. Island 3 (Bakery/Snacks): x: 670..735, y: 275..630
+    // 5. Right Wall Shelf: x: 880..960, y: 210..660
+    // 6. Top Wall Cooler: x: 260..720, y: 120..175
+    // 7. Cashier Counter: x: 785..970, y: 785..960
     const obstacles = [
-      { x1: 75, x2: 145, y1: 260, y2: 740 },
+      { x1: 70, x2: 145, y1: 260, y2: 800 },
       { x1: 285, x2: 350, y1: 275, y2: 730 },
-      { x1: 670, x2: 735, y1: 275, y2: 625 },
-      { x1: 885, x2: 955, y1: 210, y2: 620 },
+      { x1: 475, x2: 545, y1: 275, y2: 730 },
+      { x1: 670, x2: 735, y1: 275, y2: 630 },
+      { x1: 880, x2: 960, y1: 210, y2: 660 },
       { x1: 260, x2: 720, y1: 120, y2: 175 },
-      { x1: 735, x2: 965, y1: 735, y2: 890 }
+      { x1: 785, x2: 970, y1: 785, y2: 960 }
     ];
 
     for (let obs of obstacles) {
@@ -4974,7 +4987,8 @@ class PedestrianGame {
   }
 
   isNearCashier() {
-    return Math.hypot(this.player.x - 660, this.player.y - 800) < 95;
+    return Math.hypot(this.player.x - 755, this.player.y - 850) < 100 ||
+           (this.player.x >= 705 && this.player.x <= 800 && this.player.y >= 780 && this.player.y <= 920);
   }
 
   collectStoreItem(item) {
@@ -5446,8 +5460,9 @@ class PedestrianGame {
   }
 
   checkStoreCashierClick(worldX, worldY) {
-    const distToCounter = Math.hypot(worldX - 660, worldY - 800);
-    if (distToCounter < 90) {
+    const distToCounter = Math.hypot(worldX - 825, worldY - 840);
+    const inCounterZone = (worldX >= 780 && worldX <= 965 && worldY >= 780 && worldY <= 960);
+    if (distToCounter < 90 || inCounterZone) {
       if (this.isNearCashier()) {
         this.interactWithCashier();
         return true;
@@ -5597,14 +5612,14 @@ class PedestrianGame {
     const remainingCount = this.shoppingList ? this.shoppingList.filter(t => !t.collected).length : 1;
     if (remainingCount === 0) {
       const bounceOffset = Math.sin(Date.now() * 0.008) * 8;
-      const beaconX = 660;
-      const beaconY = 740 + bounceOffset;
+      const beaconX = 825;
+      const beaconY = 780 + bounceOffset;
 
       ctx.save();
       // Pulsing beacon ring around register counter
       ctx.fillStyle = 'rgba(34, 197, 94, 0.35)';
       ctx.beginPath();
-      ctx.arc(660, 800, 42 + Math.sin(Date.now() * 0.006) * 6, 0, Math.PI * 2);
+      ctx.arc(825, 840, 42 + Math.sin(Date.now() * 0.006) * 6, 0, Math.PI * 2);
       ctx.fill();
 
       // Floating beacon tag
@@ -5636,8 +5651,8 @@ class PedestrianGame {
       const bgColor = nearbyItem.onList ? '#15803d' : '#475569';
       this.drawSpeechBubble(ctx, promptX, promptY, promptText, bgColor);
     } else if (this.isNearCashier()) {
-      const cashierX = 660;
-      const cashierY = 770;
+      const cashierX = 770;
+      const cashierY = 810;
       if (remainingCount === 0) {
         this.drawSpeechBubble(ctx, cashierX, cashierY, '💳 [SPACE] Checkout & Pay!', '#15803d');
       } else {
