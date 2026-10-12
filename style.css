@@ -104,16 +104,69 @@ body, html {
   transform: translateY(-15px);
 }
 
-/* Top Sound Button Only (All text removed from top of square) */
+/* Top HUD: Safety Chances Left + Buttons Right */
 #game-hud {
   top: 12px;
   right: 12px;
-  left: auto;
+  left: 12px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  pointer-events: auto;
+  justify-content: space-between;
+  pointer-events: none;
   z-index: 25;
+}
+
+.hud-left-group, .hud-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.safety-chances-pill {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #263238;
+}
+
+.chances-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.chance-heart {
+  font-size: 1.15rem;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.25s ease, opacity 0.25s ease;
+}
+
+.chance-heart.lost {
+  transform: scale(0.85);
+  filter: grayscale(100%) brightness(0.6);
+  opacity: 0.4;
+}
+
+.chance-heart.losing {
+  animation: heartLostPop 0.55s ease-out;
+}
+
+@keyframes heartLostPop {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.4) rotate(-18deg); }
+  50% { transform: scale(1.25) rotate(18deg); }
+  75% { transform: scale(1.1) rotate(-8deg); }
+  100% { transform: scale(0.85); filter: grayscale(100%) brightness(0.6); opacity: 0.4; }
 }
 
 .hud-item {
@@ -1083,6 +1136,91 @@ body, html {
   color: #795548;
 }
 
+/* ==========================================================================
+   Safety Practice Reset (Game Over) Screen Styles
+   ========================================================================== */
+.practice-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--card-shadow);
+  padding: 22px 18px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  border: 4px solid #ff7043;
+  position: relative;
+  overflow-y: auto;
+  max-height: 96%;
+}
+
+.practice-badge {
+  display: inline-block;
+  background: #fbe9e7;
+  color: #d84315;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+  border: 2px solid #ffab91;
+}
+
+.practice-icon {
+  font-size: 3.8rem;
+  margin: 4px 0;
+  animation: floatBounce 2s infinite ease-in-out;
+}
+
+.practice-title {
+  font-size: 2rem;
+  color: #d84315;
+  margin: 4px 0 8px;
+}
+
+.practice-sub {
+  font-size: 0.98rem;
+  color: #546e7a;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.safety-tip-card {
+  background: #fff8e1;
+  border: 2px dashed #ffb300;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.safety-tip-card .tip-header {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #e65100;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.safety-tip-card .tip-text {
+  font-size: 0.95rem;
+  color: #37474f;
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 600;
+}
+
+.practice-btn {
+  background: linear-gradient(135deg, #ff7043, #e64a19) !important;
+  box-shadow: 0 6px 18px rgba(230, 74, 25, 0.4) !important;
+}
+
+.practice-btn:hover {
+  background: linear-gradient(135deg, #ff8a65, #d84315) !important;
+  box-shadow: 0 8px 24px rgba(230, 74, 25, 0.5) !important;
+}
+
 /* Animations */
 .animate-pop {
   animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1111,7 +1249,7 @@ body, html {
 @media (max-width: 480px) {
   .game-title { font-size: 2rem; }
   .game-title .subtitle { font-size: 2.3rem; }
-  .menu-card, .challenge-card, .victory-card { padding: 20px 16px; }
+  .menu-card, .challenge-card, .victory-card, .practice-card { padding: 20px 16px; }
   .char-avatar-preview { width: 58px; height: 58px; }
   .option-btn { font-size: 0.95rem; padding: 12px 14px; }
 }

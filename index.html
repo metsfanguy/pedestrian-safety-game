@@ -17,14 +17,26 @@
         <!-- Game Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Top Right Controls (Info Guide & Sound) -->
+        <!-- Top HUD Controls (Safety Chances Left, Info Guide & Sound Right) -->
         <div id="game-hud" class="hud-layer">
-          <button id="info-btn" class="hud-btn" title="How to Play & Safety Guide">
-            ℹ️
-          </button>
-          <button id="sound-toggle-btn" class="hud-btn" title="Toggle Sound">
-            🔊
-          </button>
+          <div class="hud-left-group">
+            <div id="safety-chances-pill" class="hud-item safety-chances" title="3 Safety Chances: Stay alert and follow pedestrian rules!">
+              <span class="hud-label">Safety:</span>
+              <span id="safety-chances-display" class="chances-icons">
+                <span class="chance-heart active" id="chance-heart-1">❤️</span>
+                <span class="chance-heart active" id="chance-heart-2">❤️</span>
+                <span class="chance-heart active" id="chance-heart-3">❤️</span>
+              </span>
+            </div>
+          </div>
+          <div class="hud-right-group">
+            <button id="info-btn" class="hud-btn" title="How to Play & Safety Guide">
+              ℹ️
+            </button>
+            <button id="sound-toggle-btn" class="hud-btn" title="Toggle Sound">
+              🔊
+            </button>
+          </div>
         </div>
 
     <!-- On-Screen Touch Controls (D-Pad Left + Action Button Right) -->
@@ -179,6 +191,40 @@
       </div> <!-- /#victory-card -->
     </div> <!-- /#victory-modal -->
 
+    <!-- Game Over / Safety Practice Reset Screen -->
+    <div id="game-over-modal" class="screen-overlay hidden">
+      <div class="practice-card animate-bounce">
+        <div class="practice-badge">🚦 SAFETY PRACTICE TIME! 🚸</div>
+        <div class="practice-icon" id="practice-icon">🛑</div>
+        <h2 class="practice-title" id="practice-title">Time for a Safety Reset!</h2>
+        <p class="practice-sub" id="practice-sub">
+          Even the best city walkers make mistakes! Staying safe takes practice. Let's review what happened and try again!
+        </p>
+
+        <div class="safety-tip-card">
+          <div class="tip-header">💡 PEDESTRIAN SAFETY TIP</div>
+          <p id="practice-tip-text" class="tip-text">
+            Always stop at the curb and wait for the white or green WALK signal before stepping into the crosswalk!
+          </p>
+        </div>
+
+        <div class="victory-stats-card">
+          <div class="stat-box">
+            <span class="stat-num" id="practice-stat-crossings">0 / 5</span>
+            <span class="stat-label">Crossings Passed 🚸</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="practice-stat-stars">0</span>
+            <span class="stat-label">Stars Earned ⭐</span>
+          </div>
+        </div>
+
+        <button id="practice-again-btn" class="big-action-btn pulse-glow practice-btn">
+          <span>TRY THE WALK AGAIN!</span> 🔄
+        </button>
+      </div> <!-- /.practice-card -->
+    </div> <!-- /#game-over-modal -->
+
     <!-- Info Page Modal (Game Mechanics, Signal Guide, Cybertruck Secret & Challenges) -->
     <div id="info-modal" class="screen-overlay hidden">
       <div class="info-card animate-pop">
@@ -233,6 +279,16 @@
                 <div class="mechanic-text">
                   <strong>Don't Cross at the Wrong Time!</strong>
                   <p>If you rush into the road while the signal says STOP or FLASHING, your character will stumble and sit on the ground to recover!</p>
+                </div>
+              </div>
+
+              <div class="mechanic-item">
+                <div class="mechanic-icon-box" style="background:#ffebee; color:#d32f2f; font-size:22px;">
+                  ❤️
+                </div>
+                <div class="mechanic-text">
+                  <strong>3 Safety Chances per Walk</strong>
+                  <p>You have <strong>3 Safety Chances (❤️ ❤️ ❤️)</strong>. If you make 3 safety mistakes, you'll take a quick <strong>Safety Practice Pause</strong> to review pedestrian rules before trying the route again!</p>
                 </div>
               </div>
             </div>

@@ -78,6 +78,22 @@ class SoundEffects {
     this.playTone(180, 'sawtooth', 0.25, 0.12);
   }
 
+  loseChance() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(330, 'sawtooth', 0.2, 0.12);
+    setTimeout(() => this.playTone(220, 'sawtooth', 0.3, 0.15), 110);
+  }
+
+  gameOver() {
+    if (!this.enabled) return;
+    this.init();
+    const notes = [392, 349.23, 329.63, 261.63];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.3, 0.16), idx * 160);
+    });
+  }
+
   tick() {
     if (!this.enabled) return;
     this.init();
@@ -338,6 +354,12 @@ class PedestrianGame {
     this.infoBtn = document.getElementById('info-btn');
     this.btnCloseInfo = document.getElementById('btn-close-info');
     this.btnGotItInfo = document.getElementById('btn-got-it-info');
+
+    // Safety Chances & Practice Reset (Game Over) Modal
+    this.gameOverModal = document.getElementById('game-over-modal');
+    this.maxSafetyChances = 3;
+    this.safetyChances = 3;
+    this.lastSafetyTip = '';
 
     // Keyboard & Touch Movement Keys (Supports all 4 directions & diagonals)
     this.keys = { up: false, down: false, left: false, right: false };
@@ -1103,11 +1125,21 @@ class PedestrianGame {
       this.startGame();
     });
 
-    // Play Again Button
+    // Play Again Button (Victory Modal)
     document.getElementById('play-again-btn').addEventListener('click', () => {
       sfx.playTone(523, 'triangle', 0.2);
       this.resetToStartMenu();
     });
+
+    // Safety Practice Again Button (Game Over Modal)
+    const practiceAgainBtn = document.getElementById('practice-again-btn');
+    if (practiceAgainBtn) {
+      practiceAgainBtn.addEventListener('click', () => {
+        sfx.buttonPress();
+        if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
+        this.startGame();
+      });
+    }
 
     // Sound Toggle
     const soundBtn = document.getElementById('sound-toggle-btn');
@@ -1352,10 +1384,13 @@ class PedestrianGame {
   startGame() {
     this.currentCrossingIndex = 0;
     this.safetyStars = 0;
+    this.safetyChances = 3;
+    this.lastSafetyTip = '';
     this.hasEverFallen = false;
     this.cybertruckSpawned = false;
     this.cybertruckFinished = false;
     if (this.starCountEl) this.starCountEl.textContent = '0';
+    this.updateSafetyChancesDisplay();
     this.activeInWorldAlert = null;
 
     if (this.progressAvatarImg) {
@@ -1397,6 +1432,7 @@ class PedestrianGame {
 
     this.startMenu.classList.add('hidden');
     this.victoryModal.classList.add('hidden');
+    if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     this.challengeModal.classList.add('hidden'); // Modal is never used now!
     this.gameHud.classList.remove('hidden');
     this.progressHud.classList.remove('hidden');
@@ -1523,6 +1559,12 @@ class PedestrianGame {
           this.player.y = this.player.fallTargetY;
         }
         this.player.fallTargetY = null;
+
+        if (this.safetyChances <= 0) {
+          this.triggerGameOver();
+          return;
+        }
+
         this.state = 'WALKING_SIDEWALK';
       }
 
@@ -1960,13 +2002,96 @@ class PedestrianGame {
   }
 
   // ==========================================================================
+  // SAFETY CHANCES (3 TRIES) & GAME OVER / PRACTICE RESET
+  // ==========================================================================
+  updateSafetyChancesDisplay(withAnimation = false) {
+    for (let i = 1; i <= 3; i++) {
+      const heartEl = document.getElementById(`chance-heart-${i}`);
+      if (heartEl) {
+        if (i <= this.safetyChances) {
+          heartEl.textContent = '❤️';
+          heartEl.classList.remove('lost');
+          heartEl.classList.add('active');
+        } else {
+          heartEl.textContent = '🖤';
+          heartEl.classList.remove('active');
+          heartEl.classList.add('lost');
+          if (withAnimation && i === this.safetyChances + 1) {
+            heartEl.classList.add('losing');
+            setTimeout(() => {
+              if (heartEl) heartEl.classList.remove('losing');
+            }, 600);
+          }
+        }
+      }
+    }
+  }
+
+  registerSafetyMistake(reason, tipText) {
+    this.hasEverFallen = true; // Flawless run revoked
+    this.cars = this.cars.filter(c => !c.isCybertruck); // Remove Cybertruck if active
+    this.safetyChances = Math.max(0, this.safetyChances - 1);
+    this.lastSafetyTip = tipText;
+    this.updateSafetyChancesDisplay(true);
+
+    sfx.loseChance();
+
+    const chancesLeft = this.safetyChances;
+    let chancesMsg = '';
+    if (chancesLeft === 2) {
+      chancesMsg = ' (2 Chances Left ❤️❤️)';
+    } else if (chancesLeft === 1) {
+      chancesMsg = ' (⚠️ 1 Chance Left! ❤️)';
+    } else {
+      chancesMsg = ' (🛑 Safety Check! Practice Time!)';
+    }
+    return chancesMsg;
+  }
+
+  triggerGameOver() {
+    this.state = 'GAME_OVER';
+    this.player.isWalking = false;
+    this.player.isFalling = false;
+    this.keys = { up: false, down: false, left: false, right: false };
+    this.mouseControl.isDown = false;
+    this.mouseControl.targetWorldX = null;
+    this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
+
+    if (this.walkingControls) this.walkingControls.classList.add('hidden');
+    if (this.movementGuide) this.movementGuide.classList.add('hidden');
+
+    sfx.gameOver();
+
+    const tipEl = document.getElementById('practice-tip-text');
+    if (tipEl) {
+      tipEl.textContent = this.lastSafetyTip || 'Always stop at the curb, look both ways, and wait for the white or green WALK signal!';
+    }
+    const statCrossings = document.getElementById('practice-stat-crossings');
+    if (statCrossings) {
+      statCrossings.textContent = `${this.currentCrossingIndex} / ${this.totalCrossings}`;
+    }
+    const statStars = document.getElementById('practice-stat-stars');
+    if (statStars) {
+      statStars.textContent = this.safetyStars;
+    }
+
+    if (this.gameOverModal) {
+      this.gameOverModal.classList.remove('hidden');
+    }
+  }
+
+  // ==========================================================================
   // IN-WORLD CORNER SIGNAL & FALLING DOWN MECHANICS
   // ==========================================================================
   triggerPlayerFall(zone) {
     if (this.player.isFalling) return;
 
-    this.hasEverFallen = true; // Player fell down! Cybertruck reward revoked!
-    this.cars = this.cars.filter(c => !c.isCybertruck); // Remove Cybertruck if active
+    let tip = 'Always stop behind the curb and wait for the white or green WALK signal before stepping into the crosswalk!';
+    if (zone.signalState === 'FLASHING') {
+      tip = 'A flashing walk sign means DO NOT START CROSSING! Wait safely on the curb for a fresh walk cycle.';
+    }
+    const chancesMsg = this.registerSafetyMistake('RED_SIGNAL', tip);
 
     this.state = 'PLAYER_FALLING';
     this.player.isFalling = true;
@@ -2030,7 +2155,7 @@ class PedestrianGame {
     } else if (zone.signalState === 'FLASHING') {
       warningText = '💥 WHOOPS! 🛑 WAIT ON SIDEWALK! BLINKING LIGHT MEANS DON’T WALK!';
     }
-    this.showInWorldFeedback(warningText, '#d32f2f');
+    this.showInWorldFeedback(warningText + chancesMsg, '#d32f2f');
   }
 
   showInWorldFeedback(text, color = '#2e7d32') {
@@ -2090,8 +2215,10 @@ class PedestrianGame {
 
   triggerPlayerFallFromGroup(zone) {
     if (this.player.isFalling) return;
-    this.hasEverFallen = true;
-    this.cars = this.cars.filter(c => !c.isCybertruck);
+    const chancesMsg = this.registerSafetyMistake(
+      'RUN_AHEAD',
+      'Never dash ahead into the road alone! Always wait and cross the street together with your group.'
+    );
 
     this.state = 'PLAYER_FALLING';
     this.player.isFalling = true;
@@ -2143,13 +2270,15 @@ class PedestrianGame {
       }
     });
 
-    this.showInWorldFeedback('💥 DON’T RUN AHEAD! 🛑 The group stopped! Always cross together with the group!', '#d32f2f');
+    this.showInWorldFeedback('💥 DON’T RUN AHEAD! 🛑 The group stopped! Cross together!' + chancesMsg, '#d32f2f');
   }
 
   triggerPlayerFallFromDangerousRoad(zone) {
     if (this.player.isFalling) return;
-    this.hasEverFallen = true;
-    this.cars = this.cars.filter(c => !c.isCybertruck);
+    const chancesMsg = this.registerSafetyMistake(
+      'HIGHWAY_NO_BRIDGE',
+      'Never cross a busy multi-lane highway directly on foot! Always use the pedestrian overpass footbridge.'
+    );
 
     this.state = 'PLAYER_FALLING';
     this.player.isFalling = true;
@@ -2171,13 +2300,15 @@ class PedestrianGame {
     sfx.carBrake();
     sfx.buzz();
 
-    this.showInWorldFeedback('💥 DANGEROUS! ⛔ NO CROSSWALK HERE! You must use the pedestrian bridge! 🌉', '#d32f2f');
+    this.showInWorldFeedback('💥 DANGEROUS! ⛔ NO CROSSWALK HERE! Use the pedestrian bridge! 🌉' + chancesMsg, '#d32f2f');
   }
 
   triggerPlayerFallFromDog(stranger) {
     if (this.player.isFalling) return;
-    this.hasEverFallen = true;
-    this.cars = this.cars.filter(c => !c.isCybertruck);
+    const chancesMsg = this.registerSafetyMistake(
+      'DOG_NO',
+      'Always ask the dog’s owner before petting, and step away calmly if they say no (thumbs down)!'
+    );
 
     this.state = 'PLAYER_FALLING';
     this.player.isFalling = true;
@@ -2201,13 +2332,15 @@ class PedestrianGame {
     // Fall down right here where the dog startled the player
     stranger.status = 'IDLE';
 
-    this.showInWorldFeedback('💥 STARTLED! 🛑 When an owner says NO (thumbs down), always walk away!', '#d32f2f');
+    this.showInWorldFeedback('💥 STARTLED! 🛑 When an owner says NO, always walk away!' + chancesMsg, '#d32f2f');
   }
 
   triggerPlayerFallFromStrangerVan(van) {
     if (this.player.isFalling) return;
-    this.hasEverFallen = true;
-    this.cars = this.cars.filter(c => !c.isCybertruck);
+    const chancesMsg = this.registerSafetyMistake(
+      'STRANGER_VAN',
+      'Stay on the sidewalk path! Never go near parked stranger vans or talk to strangers calling from vehicles.'
+    );
 
     this.state = 'PLAYER_FALLING';
     this.player.isFalling = true;
@@ -2232,7 +2365,7 @@ class PedestrianGame {
     // Keep player on the path center away from the stranger and van
     this.player.x = this.pathCenterX;
 
-    this.showInWorldFeedback('💥 STRANGER DANGER! 🛑 Never approach strangers near vans! Stay away and walk past!', '#d32f2f');
+    this.showInWorldFeedback('💥 STRANGER DANGER! 🛑 Never approach strangers near vans!' + chancesMsg, '#d32f2f');
   }
 
   updateGroupCrossing(dt) {
@@ -2418,7 +2551,7 @@ class PedestrianGame {
   updateTouchActionButton() {
     if (!this.btnAction) return;
 
-    if (this.player.isFalling || this.state === 'START_MENU' || this.state === 'VICTORY') {
+    if (this.player.isFalling || this.state === 'START_MENU' || this.state === 'VICTORY' || this.state === 'GAME_OVER') {
       this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
       if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
       if (this.touchActionLabel) this.touchActionLabel.textContent = 'ACTION';
@@ -2551,9 +2684,12 @@ class PedestrianGame {
     this.cybertruckSpawned = false;
     this.currentCrossingIndex = 0;
     this.safetyStars = 0;
+    this.safetyChances = 3;
+    this.updateSafetyChancesDisplay();
     if (this.starCountEl) this.starCountEl.textContent = '0';
 
     this.victoryModal.classList.add('hidden');
+    if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
     if (this.movementGuide) this.movementGuide.classList.add('hidden');
     this.startMenu.classList.remove('hidden');
