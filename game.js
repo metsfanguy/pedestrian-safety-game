@@ -460,6 +460,15 @@ class PedestrianGame {
           this.loadImage('assets/characters/boy/fall/boy-fall-06.png'),
           this.loadImage('assets/characters/boy/fall/boy-fall-07.png'),
           this.loadImage('assets/characters/boy/fall/boy-fall-08.png')
+        ],
+        petDog: [
+          this.loadImage('assets/characters/boy/pet_dog/pet_1.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_2.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_3.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_4.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_5.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_6.png'),
+          this.loadImage('assets/characters/boy/pet_dog/pet_7.png')
         ]
       },
       girl: {
@@ -753,8 +762,12 @@ class PedestrianGame {
       speed: 2.2,
       withGroup: false,
       onBridge: false,
-      fallTargetY: null
+      fallTargetY: null,
+      isPettingDog: false,
+      pettingFrame: 0,
+      pettingTimer: 0
     };
+    this.pettingSequence = null;
 
     this.cameraY = this.startY - 400;
     this.cars = [];
@@ -1413,6 +1426,10 @@ class PedestrianGame {
     this.player.fallTimer = 0;
     this.player.withGroup = false;
     this.player.onBridge = false;
+    this.player.isPettingDog = false;
+    this.player.pettingFrame = 0;
+    this.player.pettingTimer = 0;
+    this.pettingSequence = null;
 
     // Immediately position camera centered on player so the world slides from the very first step
     this.cameraY = this.player.y - (this.canvas.height / this.scale) * 0.55;
@@ -1477,6 +1494,7 @@ class PedestrianGame {
     this.updateStrangersWithDogs(dt);
     this.updateStrangerVans(dt);
     this.updatePedestrianBridge(dt);
+    this.updatePettingDog(dt);
     this.updateTouchActionButton();
 
     if (this.confettiParticles.length > 0) {
@@ -1499,6 +1517,15 @@ class PedestrianGame {
     if (this.state === 'START_MENU') {
       const targetCamY = (this.startY - 180) - (this.canvas.height / this.scale) * 0.55;
       this.cameraY += (targetCamY - this.cameraY) * 0.1;
+      return;
+    }
+
+    // ========================================================================
+    // PETTING DOG SEQUENCE (Smooth approach & 7-frame animation)
+    // ========================================================================
+    if (this.state === 'PETTING_DOG') {
+      const idealCamY = this.player.y - (this.canvas.height / this.scale) * 0.55;
+      this.cameraY += (idealCamY - this.cameraY) * 0.2;
       return;
     }
 
@@ -2497,42 +2524,167 @@ class PedestrianGame {
     });
   }
 
+  startPettingDog(stranger) {
+    if (this.player.isFalling || this.player.isPettingDog) return;
+    if (!stranger || stranger.status !== 'THUMBS_UP') return;
+
+    this.state = 'PETTING_DOG';
+    this.keys = { up: false, down: false, left: false, right: false };
+    this.mouseControl.isDown = false;
+    this.mouseControl.targetWorldX = null;
+    this.mouseControl.targetWorldY = null;
+    this.resetButtonStyles();
+
+    // Position player slightly below (south of) the stranger & dog, facing north toward them
+    const approachOffsetX = stranger.x > this.pathCenterX ? -12 : 12;
+    const targetX = stranger.x + approachOffsetX;
+    const targetY = stranger.y + 34;
+
+    this.pettingSequence = {
+      stranger: stranger,
+      stage: 'WALKING_TO_DOG',
+      targetX: targetX,
+      targetY: targetY,
+      timer: 0,
+      heartTimer: 0,
+      hearts: []
+    };
+
+    this.player.isPettingDog = true;
+    this.player.pettingFrame = 0;
+    this.player.pettingTimer = 0;
+  }
+
+  updatePettingDog(dt) {
+    if (!this.pettingSequence) return;
+    const seq = this.pettingSequence;
+
+    if (seq.stage === 'WALKING_TO_DOG') {
+      const dx = seq.targetX - this.player.x;
+      const dy = seq.targetY - this.player.y;
+      const dist = Math.hypot(dx, dy);
+
+      this.player.isWalking = true;
+      if (dist > 3) {
+        this.player.facing = this.getDirection8(dx, dy);
+        const speed = 75;
+        const step = Math.min(dist, speed * dt);
+        this.player.x += (dx / dist) * step;
+        this.player.y += (dy / dist) * step;
+        this.player.walkAnimFrame += dt * 8;
+        this.stepSoundCheck();
+      } else {
+        this.player.x = seq.targetX;
+        this.player.y = seq.targetY;
+        this.player.isWalking = false;
+        this.player.facing = 'up'; // Face forward toward the dog
+        seq.stage = 'PETTING';
+        seq.timer = 0;
+        seq.heartTimer = 0;
+        this.player.pettingFrame = 0;
+        sfx.dogHappy();
+        this.showInWorldFeedback('🐾 Petting gently... Good doggy! ❤️', '#2e7d32');
+      }
+    } else if (seq.stage === 'PETTING') {
+      seq.timer += dt;
+
+      // 7 frames over 2.45s (~0.35s per frame)
+      const totalDuration = 2.45;
+      const frame = Math.min(6, Math.floor((seq.timer / totalDuration) * 7));
+      this.player.pettingFrame = frame;
+
+      // Floating hearts & sparkles
+      seq.heartTimer = (seq.heartTimer || 0) + dt;
+      if (seq.heartTimer >= 0.28) {
+        seq.heartTimer = 0;
+        const icons = ['❤️', '✨', '🐾', '💖', '⭐'];
+        seq.hearts.push({
+          x: this.player.x + (Math.random() - 0.5) * 26,
+          y: this.player.y - 18 - Math.random() * 8,
+          vy: -28 - Math.random() * 16,
+          vx: (Math.random() - 0.5) * 16,
+          icon: icons[Math.floor(Math.random() * icons.length)],
+          alpha: 1.0,
+          life: 1.0
+        });
+      }
+
+      // Update hearts
+      seq.hearts.forEach(h => {
+        h.x += h.vx * dt;
+        h.y += h.vy * dt;
+        h.life -= dt * 0.9;
+        h.alpha = Math.max(0, h.life);
+      });
+      seq.hearts = seq.hearts.filter(h => h.life > 0);
+
+      if (seq.timer >= totalDuration) {
+        seq.stranger.hasBeenPetted = true;
+        if (!seq.stranger.pettedReward) {
+          seq.stranger.pettedReward = true;
+          this.safetyStars++;
+          if (this.starCountEl) this.starCountEl.textContent = this.safetyStars;
+        }
+        sfx.correct();
+        this.showInWorldFeedback('🎉 The dog loved being petted! Great job! ⭐🐾', '#2e7d32');
+        this.player.isPettingDog = false;
+        this.pettingSequence = null;
+        this.state = 'WALKING_SIDEWALK';
+        this.player.facing = 'up';
+      }
+    }
+  }
+
   interactWithNearbyStranger() {
     if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return;
-    if (this.player.isFalling) return;
+    if (this.player.isFalling || this.player.isPettingDog) return;
 
     let nearest = null;
-    let minDist = 75;
+    let minDist = 85;
 
     this.strangersWithDogs.forEach(stranger => {
       const dist = Math.hypot(this.player.x - stranger.x, this.player.y - stranger.y);
-      if (dist < minDist && stranger.status === 'IDLE') {
+      if (dist < minDist) {
         minDist = dist;
         nearest = stranger;
       }
     });
 
     if (nearest) {
-      nearest.interacted = true;
-      nearest.initialDist = minDist;
-      if (nearest.decision === 'THUMBS_UP') {
-        nearest.status = 'THUMBS_UP';
-        sfx.dogHappy();
-        this.safetyStars++;
-        if (this.starCountEl) this.starCountEl.textContent = this.safetyStars;
-      } else {
-        nearest.status = 'THUMBS_DOWN';
-        sfx.dogWarning();
+      if (nearest.status === 'IDLE') {
+        nearest.interacted = true;
+        nearest.initialDist = minDist;
+        if (nearest.decision === 'THUMBS_UP') {
+          nearest.status = 'THUMBS_UP';
+          sfx.dogHappy();
+          this.safetyStars++;
+          if (this.starCountEl) this.starCountEl.textContent = this.safetyStars;
+          this.showInWorldFeedback('👍 Owner said YES! Press SPACE or PET DOG to pet! 🐾', '#2e7d32');
+        } else {
+          nearest.status = 'THUMBS_DOWN';
+          sfx.dogWarning();
+          this.showInWorldFeedback('🛑 Owner said NO! Step away safely!', '#d32f2f');
+        }
+      } else if (nearest.status === 'THUMBS_UP') {
+        this.startPettingDog(nearest);
       }
     }
   }
 
   checkStrangerClick(worldX, worldY) {
+    if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return false;
+    if (this.player.isFalling || this.player.isPettingDog) return false;
+
     for (const stranger of this.strangersWithDogs) {
       const dist = Math.hypot(worldX - stranger.x, worldY - stranger.y);
-      if (dist < 55) {
-        this.interactWithNearbyStranger();
-        return true;
+      if (dist < 60) {
+        if (stranger.status === 'IDLE') {
+          this.interactWithNearbyStranger();
+          return true;
+        } else if (stranger.status === 'THUMBS_UP') {
+          this.startPettingDog(stranger);
+          return true;
+        }
       }
     }
     return false;
@@ -2583,7 +2735,7 @@ class PedestrianGame {
 
   handleSpaceAction() {
     if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return;
-    if (this.player.isFalling) return;
+    if (this.player.isFalling || this.player.isPettingDog) return;
 
     // 1. Check if near crosswalk button at a traffic light intersection
     if (this.interactWithSignalButton()) {
@@ -2605,7 +2757,7 @@ class PedestrianGame {
   updateTouchActionButton() {
     if (!this.btnAction) return;
 
-    if (this.player.isFalling || this.state === 'START_MENU' || this.state === 'VICTORY' || this.state === 'GAME_OVER') {
+    if (this.player.isFalling || this.player.isPettingDog || this.state === 'START_MENU' || this.state === 'VICTORY' || this.state === 'GAME_OVER') {
       this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
       if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
       if (this.touchActionLabel) this.touchActionLabel.textContent = 'ACTION';
@@ -2623,12 +2775,12 @@ class PedestrianGame {
     }
 
     // 2. Proximity to stranger with dog
-    let isNearDog = false;
+    let nearDog = null;
     if (this.strangersWithDogs) {
       for (const stranger of this.strangersWithDogs) {
         const dist = Math.hypot(this.player.x - stranger.x, this.player.y - stranger.y);
-        if (dist < 85 && stranger.status === 'IDLE') {
-          isNearDog = true;
+        if (dist < 90) {
+          nearDog = stranger;
           break;
         }
       }
@@ -2641,12 +2793,26 @@ class PedestrianGame {
       if (this.touchActionLabel) {
         this.touchActionLabel.textContent = currentZone.pedestrianButtonPressed ? 'WAITING' : 'PRESS SIGN';
       }
-    } else if (isNearDog) {
-      this.btnAction.classList.add('highlight-dog');
-      this.btnAction.classList.remove('highlight-signal');
-      if (this.touchActionIcon) this.touchActionIcon.textContent = '🐕';
-      if (this.touchActionLabel) {
-        this.touchActionLabel.textContent = 'ASK OWNER';
+    } else if (nearDog) {
+      if (nearDog.status === 'IDLE') {
+        this.btnAction.classList.add('highlight-dog');
+        this.btnAction.classList.remove('highlight-signal');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '🐕';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = 'ASK OWNER';
+      } else if (nearDog.status === 'THUMBS_UP') {
+        this.btnAction.classList.add('highlight-dog');
+        this.btnAction.classList.remove('highlight-signal');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '🐾';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = nearDog.hasBeenPetted ? 'PET AGAIN' : 'PET DOG';
+      } else if (nearDog.status === 'THUMBS_DOWN') {
+        this.btnAction.classList.add('highlight-signal');
+        this.btnAction.classList.remove('highlight-dog');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '⚠️';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = 'STEP BACK';
+      } else {
+        this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = 'ACTION';
       }
     } else {
       this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
@@ -2757,6 +2923,10 @@ class PedestrianGame {
     this.player.isFalling = false;
     this.player.withGroup = false;
     this.player.onBridge = false;
+    this.player.isPettingDog = false;
+    this.player.pettingFrame = 0;
+    this.player.pettingTimer = 0;
+    this.pettingSequence = null;
 
     this.cameraY = this.startY - (this.canvas.height / this.scale) * 0.55;
 
@@ -3737,12 +3907,18 @@ class PedestrianGame {
 
       // Interactive Prompts and Speech Bubbles
       if (stranger.status === 'IDLE') {
-        if (dist < 80) {
+        if (dist < 85) {
           const bounce = Math.sin(Date.now() / 200) * 3;
           this.drawInteractivePrompt(ctx, 0, -stranger.drawH / 2 - 24 + bounce, '⌨️ [SPACE] or Tap: Ask to pet dog! 🐕', '#ff8f00');
         }
       } else if (stranger.status === 'THUMBS_UP') {
-        this.drawSpeechBubble(ctx, 0, -stranger.drawH / 2 - 24, '👍 THUMBS UP! "You can pet Biscuit!" 🐕', '#2e7d32');
+        if (!stranger.hasBeenPetted) {
+          const bounce = Math.sin(Date.now() / 180) * 3;
+          this.drawInteractivePrompt(ctx, 0, -stranger.drawH / 2 - 38 + bounce, '⌨️ [SPACE] or Tap: Pet the dog! 🐾', '#2e7d32');
+          this.drawSpeechBubble(ctx, 0, -stranger.drawH / 2 - 16, `👍 THUMBS UP! "You can pet ${stranger.name.split('&')[1]?.trim() || 'the dog'}!" 🐕`, '#2e7d32');
+        } else {
+          this.drawSpeechBubble(ctx, 0, -stranger.drawH / 2 - 20, `❤️ Happy doggy! Wagging its tail! 🐕✨`, '#2e7d32');
+        }
       } else if (stranger.status === 'THUMBS_DOWN') {
         const blink = Math.sin(Date.now() / 120) > 0;
         this.drawSpeechBubble(ctx, 0, -stranger.drawH / 2 - 24, '👎 THUMBS DOWN! "Nervous dog! WALK AWAY!" ⚠️', blink ? '#d32f2f' : '#b71c1c');
@@ -4095,6 +4271,47 @@ class PedestrianGame {
         ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('💫', 0, -charH / 2 - 10);
+      }
+
+      ctx.restore();
+      return;
+    }
+
+    // 2. IF CHARACTER IS PETTING DOG (7-frame boy animation sequence):
+    if (this.player.isPettingDog && this.pettingSequence && this.pettingSequence.stage === 'PETTING') {
+      const petFrames = this.sprites.boy.petDog;
+      const fIdx = Math.max(0, Math.min(6, this.player.pettingFrame || 0));
+      const pSprite = (petFrames && petFrames[fIdx]) ? petFrames[fIdx] : null;
+
+      // Ground shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 20, 20, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Petting Sprite
+      const pW = 64;
+      const pH = 64;
+      if (pSprite && pSprite.isLoaded) {
+        ctx.drawImage(pSprite, -pW / 2, -pH / 2 - 2, pW, pH);
+      } else {
+        ctx.fillStyle = '#1e88e5';
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw floating heart / sparkle particles
+      if (this.pettingSequence && this.pettingSequence.hearts) {
+        this.pettingSequence.hearts.forEach(h => {
+          ctx.save();
+          ctx.font = 'bold 15px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.globalAlpha = h.alpha;
+          ctx.fillText(h.icon, h.x - this.player.x, h.y - this.player.y);
+          ctx.restore();
+        });
       }
 
       ctx.restore();
