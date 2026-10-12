@@ -140,6 +140,29 @@ class SoundEffects {
     });
   }
 
+  itemPickup() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(587.33, 'sine', 0.15, 0.12);
+    setTimeout(() => this.playTone(880, 'sine', 0.18, 0.14), 70);
+  }
+
+  cashRegister() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(1760, 'sine', 0.35, 0.2);
+    setTimeout(() => this.playTone(2349, 'triangle', 0.4, 0.2), 90);
+    setTimeout(() => this.playTone(3520, 'sine', 0.45, 0.15), 180);
+    setTimeout(() => this.playTone(180, 'sawtooth', 0.12, 0.08), 240);
+  }
+
+  doorChime() {
+    if (!this.enabled) return;
+    this.init();
+    this.playTone(783.99, 'sine', 0.25, 0.15);
+    setTimeout(() => this.playTone(659.25, 'sine', 0.3, 0.15), 140);
+  }
+
   guardWhistle() {
     if (!this.enabled) return;
     this.init();
@@ -360,6 +383,20 @@ class PedestrianGame {
     this.maxSafetyChances = 3;
     this.safetyChances = 3;
     this.lastSafetyTip = '';
+
+    // Level Mode Selection (Level 1: Bakery Walk, Level 2: Grocery Store Adventure)
+    this.gameLevel = 1;
+    this.selectLevel1 = document.getElementById('select-level-1');
+    this.selectLevel2 = document.getElementById('select-level-2');
+
+    // Store HUD & Checkout Modal Elements
+    this.storeHud = document.getElementById('store-hud');
+    this.storeItemsCounter = document.getElementById('store-items-counter');
+    this.storeChecklist = document.getElementById('store-checklist');
+    this.storeGoalBanner = document.getElementById('store-goal-banner');
+    this.checkoutModal = document.getElementById('checkout-modal');
+    this.storePlayAgainBtn = document.getElementById('store-play-again-btn');
+    this.storeMainMenuBtn = document.getElementById('store-main-menu-btn');
 
     // Keyboard & Touch Movement Keys (Supports all 4 directions & diagonals)
     this.keys = { up: false, down: false, left: false, right: false };
@@ -787,9 +824,20 @@ class PedestrianGame {
     this.activeInWorldAlert = null;
     this.lastTime = performance.now();
 
+    // Store assets & grocery catalog preloading
+    this.storeImage = this.loadImage('assets/shopping/store_interior_topdown_minimal.jpg');
+    this.storeCatalog = this.getStoreCatalog();
+    this.shoppingItemImages = {};
+    this.storeCatalog.forEach(item => {
+      this.shoppingItemImages[item.file] = this.loadImage(`assets/shopping/items/${item.file}`);
+    });
+    this.storeItems = [];
+    this.shoppingList = [];
+
     this.initCanvasResize();
     this.bindEvents();
     this.setupTraffic();
+    this.setLevel(1);
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
   }
@@ -1063,6 +1111,13 @@ class PedestrianGame {
     const canvasX = (clientX - rect.left) * (this.canvas.width / rect.width);
     const canvasY = (clientY - rect.top) * (this.canvas.height / rect.height);
 
+    if (this.state === 'STORE_SHOPPING') {
+      const storeScale = this.canvas.width / 1024;
+      const worldX = canvasX / storeScale;
+      const worldY = canvasY / storeScale;
+      return { worldX, worldY, canvasX, canvasY };
+    }
+
     const worldX = (canvasX - this.offsetX) / this.scale;
     const worldY = (canvasY / this.scale) + this.cameraY;
 
@@ -1146,11 +1201,44 @@ class PedestrianGame {
       this.startGame();
     });
 
-    // Play Again Button (Victory Modal)
+    // Level Mode Selection (Level 1: Bakery Walk vs Level 2: Grocery Store Adventure)
+    if (this.selectLevel1) {
+      this.selectLevel1.addEventListener('click', () => {
+        sfx.playTone(420, 'sine', 0.1);
+        this.setLevel(1);
+      });
+    }
+
+    if (this.selectLevel2) {
+      this.selectLevel2.addEventListener('click', () => {
+        sfx.playTone(560, 'sine', 0.1);
+        this.setLevel(2);
+      });
+    }
+
+    // Play Again Button (Victory Modal - Level 1)
     document.getElementById('play-again-btn').addEventListener('click', () => {
       sfx.playTone(523, 'triangle', 0.2);
       this.resetToStartMenu();
     });
+
+    // Store Checkout Modal Buttons (Level 2)
+    if (this.storePlayAgainBtn) {
+      this.storePlayAgainBtn.addEventListener('click', () => {
+        sfx.playTone(523, 'triangle', 0.2);
+        if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+        this.setLevel(2);
+        this.startGame();
+      });
+    }
+
+    if (this.storeMainMenuBtn) {
+      this.storeMainMenuBtn.addEventListener('click', () => {
+        sfx.buttonPress();
+        if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+        this.resetToStartMenu();
+      });
+    }
 
     // Safety Practice Again Button (Game Over Modal)
     const practiceAgainBtn = document.getElementById('practice-again-btn');
@@ -1232,7 +1320,7 @@ class PedestrianGame {
         return;
       }
 
-      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') {
+      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
         return;
       }
 
@@ -1286,13 +1374,21 @@ class PedestrianGame {
     // ========================================================================
     const onPointerDown = (e) => {
       if (this.infoModal && !this.infoModal.classList.contains('hidden')) return;
-      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') {
+      if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
         return;
       }
       if (e.target !== this.canvas) return;
 
       e.preventDefault();
       const coords = this.getCanvasWorldCoords(e);
+      if (this.state === 'STORE_SHOPPING') {
+        if (this.checkStoreItemClick(coords.worldX, coords.worldY)) {
+          return;
+        }
+        if (this.checkStoreCashierClick(coords.worldX, coords.worldY)) {
+          return;
+        }
+      }
       if (this.checkSignalButtonClick(coords.worldX, coords.worldY)) {
         return;
       }
@@ -1330,7 +1426,7 @@ class PedestrianGame {
       const startPress = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') {
+        if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL' && this.state !== 'STORE_SHOPPING') {
           return;
         }
         this.keys[dirKey] = true;
@@ -1453,10 +1549,12 @@ class PedestrianGame {
 
     if (this.destinationIconEl) this.destinationIconEl.textContent = this.destination.icon;
     if (this.destinationTextEl) this.destinationTextEl.textContent = `Heading to ${this.destination.title}`;
-    if (this.endPointLabelEl) this.endPointLabelEl.textContent = `🧁 Bakery & Park`;
+    if (this.endPointLabelEl) this.endPointLabelEl.textContent = this.gameLevel === 2 ? '🛒 Fresh Market' : '🧁 Bakery & Park';
 
     this.startMenu.classList.add('hidden');
     this.victoryModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     this.challengeModal.classList.add('hidden'); // Modal is never used now!
     this.gameHud.classList.remove('hidden');
@@ -1496,6 +1594,11 @@ class PedestrianGame {
   }
 
   update(dt) {
+    if (this.state === 'STORE_SHOPPING') {
+      this.updateStore(dt);
+      return;
+    }
+
     this.updateTraffic(dt);
     this.updateCrossingGuard(dt);
     this.updateGroupCrossing(dt);
@@ -1803,7 +1906,11 @@ class PedestrianGame {
           this.player.y = this.destinationY;
           this.player.isWalking = false;
           this.mouseControl.isDown = false;
-          this.triggerVictory();
+          if (this.gameLevel === 2) {
+            this.enterStoreScene();
+          } else {
+            this.triggerVictory();
+          }
         }
       }
 
@@ -2745,6 +2852,11 @@ class PedestrianGame {
   }
 
   handleSpaceAction() {
+    if (this.state === 'STORE_SHOPPING') {
+      this.handleStoreAction();
+      return;
+    }
+
     if (this.state !== 'WALKING_SIDEWALK' && this.state !== 'CROSSING_ROAD' && this.state !== 'WALKING_TO_GOAL') return;
     if (this.player.isFalling || this.player.isPettingDog) return;
 
@@ -2768,7 +2880,30 @@ class PedestrianGame {
   updateTouchActionButton() {
     if (!this.btnAction) return;
 
-    if (this.player.isFalling || this.player.isPettingDog || this.state === 'START_MENU' || this.state === 'VICTORY' || this.state === 'GAME_OVER') {
+    if (this.state === 'STORE_SHOPPING') {
+      const nearItem = this.getNearbyStoreItem();
+      const nearCashier = this.isNearCashier();
+      const remaining = this.shoppingList ? this.shoppingList.filter(t => !t.collected).length : 0;
+
+      if (nearItem) {
+        this.btnAction.classList.add('highlight-dog');
+        this.btnAction.classList.remove('highlight-signal');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '🧺';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = nearItem.onList ? 'TAKE ITEM' : 'INSPECT';
+      } else if (nearCashier) {
+        this.btnAction.classList.add('highlight-signal');
+        this.btnAction.classList.remove('highlight-dog');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '💳';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = remaining === 0 ? 'PAY CASHIER' : 'REGISTER';
+      } else {
+        this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
+        if (this.touchActionIcon) this.touchActionIcon.textContent = '🛒';
+        if (this.touchActionLabel) this.touchActionLabel.textContent = 'SHOP';
+      }
+      return;
+    }
+
+    if (this.player.isFalling || this.player.isPettingDog || this.state === 'START_MENU' || this.state === 'VICTORY' || this.state === 'GAME_OVER' || this.state === 'STORE_CHECKOUT') {
       this.btnAction.classList.remove('highlight-signal', 'highlight-dog');
       if (this.touchActionIcon) this.touchActionIcon.textContent = '🛎️';
       if (this.touchActionLabel) this.touchActionLabel.textContent = 'ACTION';
@@ -2920,10 +3055,13 @@ class PedestrianGame {
     if (this.starCountEl) this.starCountEl.textContent = '0';
 
     this.victoryModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
     if (this.movementGuide) this.movementGuide.classList.add('hidden');
     this.startMenu.classList.remove('hidden');
+    this.setLevel(this.gameLevel || 1);
 
     this.randomizeTrialsAndEnvironments();
 
@@ -2951,6 +3089,11 @@ class PedestrianGame {
   render() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.state === 'STORE_SHOPPING' || this.state === 'STORE_CHECKOUT') {
+      this.renderStore(ctx);
+      return;
+    }
 
     ctx.save();
     ctx.translate(this.offsetX, -this.cameraY * this.scale);
@@ -4464,6 +4607,560 @@ class PedestrianGame {
       ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
       ctx.restore();
     });
+  }
+
+  // ==========================================================================
+  // LEVEL SELECTION & MODE SWITCHING
+  // ==========================================================================
+  setLevel(level) {
+    this.gameLevel = level;
+    if (this.selectLevel1) {
+      if (level === 1) this.selectLevel1.classList.add('selected');
+      else this.selectLevel1.classList.remove('selected');
+    }
+    if (this.selectLevel2) {
+      if (level === 2) this.selectLevel2.classList.add('selected');
+      else this.selectLevel2.classList.remove('selected');
+    }
+
+    const menuDestIcon = document.getElementById('menu-dest-icon');
+    const menuDestTitle = document.getElementById('menu-dest-title');
+    const menuDestDesc = document.getElementById('menu-dest-desc');
+
+    if (level === 2) {
+      this.destination = {
+        title: 'Fresh Market Grocery Store',
+        icon: '🛒',
+        desc: 'Walk across town, find items on your shopping list, and checkout at the register!'
+      };
+      if (menuDestIcon) menuDestIcon.textContent = '🛒';
+      if (menuDestTitle) menuDestTitle.textContent = 'Fresh Market Grocery';
+      if (menuDestDesc) menuDestDesc.textContent = 'Shop for items on your grocery list and pay at the cashier!';
+      if (this.destinationIconEl) this.destinationIconEl.textContent = '🛒';
+      if (this.destinationTextEl) this.destinationTextEl.textContent = 'Heading to Fresh Market';
+      if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🛒 Fresh Market';
+    } else {
+      this.destination = {
+        title: 'Grandma’s Bakery & Town Park',
+        icon: '🧁',
+        desc: 'Fresh cupcakes & the playground are at the end of the avenue!'
+      };
+      if (menuDestIcon) menuDestIcon.textContent = '🧁';
+      if (menuDestTitle) menuDestTitle.textContent = 'Sweet Treat Bakery';
+      if (menuDestDesc) menuDestDesc.textContent = 'A delicious snack is waiting across town!';
+      if (this.destinationIconEl) this.destinationIconEl.textContent = '🧁';
+      if (this.destinationTextEl) this.destinationTextEl.textContent = "Heading to Grandma's Bakery";
+      if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🧁 Bakery & Park';
+    }
+  }
+
+  // ==========================================================================
+  // LEVEL 2 STORE SHOPPING & CHECKOUT MECHANICS
+  // ==========================================================================
+  getStoreCatalog() {
+    return [
+      // Left Wall Produce Shelves (x: 195)
+      { id: 'apple', file: '01_apple.png', name: 'Red Apple', category: 'produce', price: 1.00, shelfX: 195, shelfY: 290 },
+      { id: 'bananas', file: '02_bananas.png', name: 'Fresh Bananas', category: 'produce', price: 1.25, shelfX: 195, shelfY: 360 },
+      { id: 'orange', file: '03_orange.png', name: 'Juicy Orange', category: 'produce', price: 1.00, shelfX: 195, shelfY: 430 },
+      { id: 'grapes', file: '04_grapes.png', name: 'Purple Grapes', category: 'produce', price: 2.50, shelfX: 195, shelfY: 500 },
+      { id: 'strawberries', file: '05_strawberries.png', name: 'Sweet Strawberries', category: 'produce', price: 3.00, shelfX: 195, shelfY: 570 },
+      { id: 'carrot', file: '09_carrot.png', name: 'Crunchy Carrot', category: 'produce', price: 0.80, shelfX: 195, shelfY: 640 },
+      { id: 'broccoli', file: '10_broccoli.png', name: 'Fresh Broccoli', category: 'produce', price: 1.50, shelfX: 195, shelfY: 710 },
+
+      // Top Glass Cooler (y: 135)
+      { id: 'milk_carton', file: '23_milk_carton.png', name: 'Fresh Milk', category: 'cooler', price: 2.50, shelfX: 230, shelfY: 135 },
+      { id: 'cheese_wedge', file: '24_cheese_wedge.png', name: 'Cheddar Cheese', category: 'cooler', price: 3.25, shelfX: 330, shelfY: 135 },
+      { id: 'strawberry_yogurt', file: '25_strawberry_yogurt.png', name: 'Strawberry Yogurt', category: 'cooler', price: 1.50, shelfX: 430, shelfY: 135 },
+      { id: 'water_bottle', file: '27_water_bottle.png', name: 'Spring Water', category: 'cooler', price: 1.00, shelfX: 530, shelfY: 135 },
+      { id: 'orange_juice', file: '28_orange_juice.png', name: 'Orange Juice', category: 'cooler', price: 2.75, shelfX: 630, shelfY: 135 },
+      { id: 'ice_cream_tub', file: '49_ice_cream_tub.png', name: 'Ice Cream Tub', category: 'cooler', price: 4.00, shelfX: 730, shelfY: 135 },
+      { id: 'pizza_box', file: '50_pizza_box.png', name: 'Frozen Pizza', category: 'cooler', price: 5.50, shelfX: 830, shelfY: 135 },
+
+      // Center Island 1 (Pantry & Grains, x: 405)
+      { id: 'sliced_bread', file: '18_sliced_bread.png', name: 'Sliced Bread', category: 'pantry', price: 2.00, shelfX: 405, shelfY: 290 },
+      { id: 'cereal_box', file: '29_cereal_box.png', name: 'Cereal Box', category: 'pantry', price: 3.50, shelfX: 405, shelfY: 370 },
+      { id: 'pasta_box', file: '30_pasta_box.png', name: 'Italian Pasta', category: 'pantry', price: 1.50, shelfX: 405, shelfY: 450 },
+      { id: 'peanut_butter', file: '36_peanut_butter.png', name: 'Peanut Butter', category: 'pantry', price: 2.80, shelfX: 405, shelfY: 530 },
+      { id: 'strawberry_jam', file: '37_strawberry_jam.png', name: 'Strawberry Jam', category: 'pantry', price: 2.40, shelfX: 405, shelfY: 610 },
+      { id: 'honey_jar', file: '38_honey_jar.png', name: 'Pure Clover Honey', category: 'pantry', price: 3.80, shelfX: 405, shelfY: 690 },
+
+      // Center Island 2 (Bakery & Snacks, x: 625)
+      { id: 'croissant', file: '20_croissant.png', name: 'Golden Croissant', category: 'bakery', price: 1.80, shelfX: 625, shelfY: 290 },
+      { id: 'baguette', file: '19_baguette.png', name: 'French Baguette', category: 'bakery', price: 2.20, shelfX: 625, shelfY: 370 },
+      { id: 'pasta_sauce', file: '41_pasta_sauce_jar.png', name: 'Pasta Sauce Jar', category: 'canned', price: 2.30, shelfX: 625, shelfY: 450 },
+      { id: 'potato_chips', file: '45_potato_chips.png', name: 'Crispy Chips', category: 'snacks', price: 1.95, shelfX: 625, shelfY: 530 },
+      { id: 'chocolate_bar', file: '47_chocolate_bar.png', name: 'Chocolate Bar', category: 'snacks', price: 1.25, shelfX: 625, shelfY: 610 },
+      { id: 'cookies', file: '48_cookies_package.png', name: 'Chocolate Cookies', category: 'snacks', price: 2.60, shelfX: 625, shelfY: 690 },
+
+      // Right Wall Shelves (Household & Treats, x: 835)
+      { id: 'donut', file: '21_donut.png', name: 'Glazed Donut', category: 'bakery', price: 1.20, shelfX: 835, shelfY: 290 },
+      { id: 'canned_beans', file: '40_canned_beans.png', name: 'Canned Beans', category: 'canned', price: 1.10, shelfX: 835, shelfY: 370 },
+      { id: 'dish_soap', file: '55_dish_soap.png', name: 'Dish Soap', category: 'household', price: 2.20, shelfX: 835, shelfY: 450 },
+      { id: 'paper_towels', file: '54_paper_towels.png', name: 'Paper Towels', category: 'household', price: 2.80, shelfX: 835, shelfY: 530 }
+    ];
+  }
+
+  enterStoreScene() {
+    this.state = 'STORE_SHOPPING';
+    this.mouseControl.isDown = false;
+    this.mouseControl.targetWorldX = null;
+    this.mouseControl.targetWorldY = null;
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+
+    // Reset player position to store entrance
+    this.player.x = 512;
+    this.player.y = 910;
+    this.player.facing = 'up';
+    this.player.isWalking = false;
+    this.player.isFalling = false;
+    this.player.withGroup = false;
+    this.player.onBridge = false;
+    this.player.isPettingDog = false;
+
+    // Deep clone store catalog items so each session has fresh state
+    this.storeItems = this.getStoreCatalog().map(item => ({
+      ...item,
+      collected: false,
+      onList: false
+    }));
+
+    // Choose 3 distinct items for the shopping list
+    const produceList = this.storeItems.filter(i => i.category === 'produce');
+    const coolerList = this.storeItems.filter(i => i.category === 'cooler');
+    const dryList = this.storeItems.filter(i => ['pantry', 'bakery', 'snacks'].includes(i.category));
+
+    const item1 = produceList[Math.floor(Math.random() * produceList.length)];
+    const item2 = coolerList[Math.floor(Math.random() * coolerList.length)];
+    const item3 = dryList[Math.floor(Math.random() * dryList.length)];
+
+    this.shoppingList = [
+      { id: item1.id, name: item1.name, file: item1.file, price: item1.price, collected: false },
+      { id: item2.id, name: item2.name, file: item2.file, price: item2.price, collected: false },
+      { id: item3.id, name: item3.name, file: item3.file, price: item3.price, collected: false }
+    ];
+
+    this.storeItems.forEach(item => {
+      item.onList = this.shoppingList.some(target => target.id === item.id);
+    });
+
+    if (this.walkingControls) this.walkingControls.classList.remove('hidden');
+    if (this.storeHud) this.storeHud.classList.remove('hidden');
+    if (this.gameHud) this.gameHud.classList.remove('hidden');
+    if (this.progressHud) this.progressHud.classList.add('hidden');
+
+    this.updateShoppingListUI();
+    this.showInWorldFeedback('🛒 Arrived at Fresh Market! Find items on your list!', '#15803d');
+    sfx.doorChime();
+  }
+
+  updateShoppingListUI() {
+    const listContainer = document.getElementById('store-checklist');
+    const counterEl = document.getElementById('store-items-counter');
+    const bannerEl = document.getElementById('store-goal-banner');
+
+    if (!listContainer || !this.shoppingList) return;
+
+    const collectedCount = this.shoppingList.filter(t => t.collected).length;
+    if (counterEl) {
+      counterEl.textContent = `${collectedCount}/${this.shoppingList.length}`;
+      if (collectedCount === this.shoppingList.length) {
+        counterEl.classList.add('complete');
+      } else {
+        counterEl.classList.remove('complete');
+      }
+    }
+
+    if (bannerEl) {
+      if (collectedCount === this.shoppingList.length) {
+        bannerEl.textContent = '🎉 All items found! Go to the cash register to pay! 💳';
+        bannerEl.classList.add('goal-ready');
+      } else {
+        bannerEl.textContent = 'Find the items on the shelves!';
+        bannerEl.classList.remove('goal-ready');
+      }
+    }
+
+    listContainer.innerHTML = '';
+    this.shoppingList.forEach(target => {
+      const itemRow = document.createElement('div');
+      itemRow.className = `store-check-item ${target.collected ? 'collected' : ''}`;
+      itemRow.innerHTML = `
+        <img src="assets/shopping/items/${target.file}" alt="${target.name}" class="check-item-img">
+        <span class="check-item-name">${target.name}</span>
+        <span class="check-item-status">${target.collected ? '✅' : '⬜'}</span>
+      `;
+      listContainer.appendChild(itemRow);
+    });
+  }
+
+  isStorePositionBlocked(x, y) {
+    const r = 16;
+    // Store outer walls
+    if (x - r < 120 || x + r > 910) return true;
+    if (y - r < 180) return true;
+    if (y + r > 930) {
+      // Allow entrance doorway: x in 440..584
+      if (x - r < 440 || x + r > 584 || y + r > 970) return true;
+    }
+
+    // Interior shelf obstacles & counter
+    const obstacles = [
+      { x1: 155, x2: 235, y1: 260, y2: 760 },
+      { x1: 365, x2: 445, y1: 260, y2: 740 },
+      { x1: 585, x2: 665, y1: 260, y2: 740 },
+      { x1: 795, x2: 875, y1: 260, y2: 660 },
+      { x1: 690, x2: 915, y1: 720, y2: 885 }
+    ];
+
+    for (let obs of obstacles) {
+      if (x + r > obs.x1 && x - r < obs.x2 && y + r > obs.y1 && y - r < obs.y2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  getNearbyStoreItem() {
+    if (!this.storeItems) return null;
+    let closest = null;
+    let closestDist = 78;
+    for (const item of this.storeItems) {
+      if (item.collected) continue;
+      const dist = Math.hypot(this.player.x - item.shelfX, this.player.y - item.shelfY);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = item;
+      }
+    }
+    return closest;
+  }
+
+  isNearCashier() {
+    return Math.hypot(this.player.x - 700, this.player.y - 800) < 100;
+  }
+
+  collectStoreItem(item) {
+    if (item.collected) return;
+    if (item.onList) {
+      item.collected = true;
+      const target = this.shoppingList.find(t => t.id === item.id);
+      if (target) target.collected = true;
+
+      sfx.itemPickup();
+      const collectedCount = this.shoppingList.filter(t => t.collected).length;
+      this.updateShoppingListUI();
+
+      if (collectedCount >= this.shoppingList.length) {
+        sfx.fanfare();
+        this.showInWorldFeedback('🎉 Shopping list complete! Go pay at the Cashier!', '#ca8a04');
+      } else {
+        this.showInWorldFeedback(`✨ Found: ${item.name}! (${collectedCount}/${this.shoppingList.length})`, '#16a34a');
+      }
+    } else {
+      sfx.buzz();
+      const needed = this.shoppingList.filter(t => !t.collected).map(t => t.name).join(', ');
+      this.showInWorldFeedback(`Not on your list! Look for: ${needed} 📝`, '#d97706');
+    }
+  }
+
+  interactWithCashier() {
+    const remaining = this.shoppingList.filter(t => !t.collected);
+    if (remaining.length > 0) {
+      sfx.buzz();
+      const names = remaining.map(t => t.name).join(', ');
+      this.showInWorldFeedback(`Cashier: "You still need: ${names}! Check the shelves!" 🛒`, '#dc2626');
+      return;
+    }
+    this.checkoutStore();
+  }
+
+  checkoutStore() {
+    this.state = 'STORE_CHECKOUT';
+    this.player.isWalking = false;
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.mouseControl.isDown = false;
+
+    sfx.cashRegister();
+
+    const container = document.getElementById('receipt-items-container');
+    if (container) {
+      container.innerHTML = '';
+      let total = 0;
+      this.shoppingList.forEach(item => {
+        total += item.price;
+        const row = document.createElement('div');
+        row.className = 'receipt-item-row';
+        row.innerHTML = `
+          <div class="receipt-item-left">
+            <img src="assets/shopping/items/${item.file}" alt="${item.name}" class="receipt-item-thumb">
+            <span>${item.name}</span>
+          </div>
+          <span class="receipt-item-price">$${item.price.toFixed(2)}</span>
+        `;
+        container.appendChild(row);
+      });
+      const countEl = document.getElementById('receipt-count-val');
+      const priceEl = document.getElementById('receipt-price-val');
+      if (countEl) countEl.textContent = `${this.shoppingList.length}`;
+      if (priceEl) priceEl.textContent = `$${total.toFixed(2)}`;
+    }
+
+    this.confettiParticles = [];
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+    for (let i = 0; i < 90; i++) {
+      this.confettiParticles.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * -this.canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 4,
+        vRot: (Math.random() - 0.5) * 0.2,
+        rotation: Math.random() * Math.PI,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 8 + Math.random() * 8
+      });
+    }
+
+    if (this.walkingControls) this.walkingControls.classList.add('hidden');
+    if (this.storeHud) this.storeHud.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.remove('hidden');
+
+    setTimeout(() => {
+      sfx.fanfare();
+    }, 450);
+  }
+
+  handleStoreAction() {
+    if (this.state !== 'STORE_SHOPPING') return;
+    const nearItem = this.getNearbyStoreItem();
+    if (nearItem) {
+      this.collectStoreItem(nearItem);
+      return;
+    }
+    const nearCashier = this.isNearCashier();
+    if (nearCashier) {
+      this.interactWithCashier();
+      return;
+    }
+  }
+
+  checkStoreItemClick(worldX, worldY) {
+    if (!this.storeItems) return false;
+    for (const item of this.storeItems) {
+      if (item.collected) continue;
+      const dist = Math.hypot(worldX - item.shelfX, worldY - item.shelfY);
+      if (dist < 36) {
+        const playerDist = Math.hypot(this.player.x - item.shelfX, this.player.y - item.shelfY);
+        if (playerDist < 95) {
+          this.collectStoreItem(item);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  checkStoreCashierClick(worldX, worldY) {
+    const distToCounter = Math.hypot(worldX - 700, worldY - 800);
+    if (distToCounter < 60) {
+      if (this.isNearCashier()) {
+        this.interactWithCashier();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  updateStore(dt) {
+    this.updateTouchActionButton();
+
+    if (this.confettiParticles.length > 0) {
+      this.confettiParticles.forEach(p => {
+        p.y += p.vy;
+        p.x += p.vx;
+        p.rotation += p.vRot;
+      });
+      this.confettiParticles = this.confettiParticles.filter(p => p.y < this.canvas.height + 50);
+    }
+
+    if (this.activeInWorldAlert) {
+      this.activeInWorldAlert.timer -= dt;
+      if (this.activeInWorldAlert.timer <= 0) {
+        this.activeInWorldAlert = null;
+      }
+    }
+
+    let dx = 0;
+    let dy = 0;
+    const speed = 2.8;
+
+    if (this.mouseControl.isDown && this.mouseControl.targetWorldX !== null && this.mouseControl.targetWorldY !== null) {
+      const toX = this.mouseControl.targetWorldX - this.player.x;
+      const toY = this.mouseControl.targetWorldY - this.player.y;
+      const dist = Math.hypot(toX, toY);
+      if (dist > 8) {
+        dx = (toX / dist) * speed;
+        dy = (toY / dist) * speed;
+        this.player.isWalking = true;
+      } else {
+        this.player.isWalking = false;
+      }
+    } else {
+      if (this.keys.up) dy -= speed;
+      if (this.keys.down) dy += speed;
+      if (this.keys.left) dx -= speed;
+      if (this.keys.right) dx += speed;
+
+      if (dx !== 0 && dy !== 0) {
+        dx *= 0.7071;
+        dy *= 0.7071;
+      }
+      this.player.isWalking = (dx !== 0 || dy !== 0);
+    }
+
+    if (this.player.isWalking) {
+      this.player.facing = this.getDirection8(dx, dy);
+      this.player.walkAnimFrame += 0.22;
+      this.stepSoundCheck();
+
+      // Horizontal sliding collision
+      if (dx !== 0 && !this.isStorePositionBlocked(this.player.x + dx, this.player.y)) {
+        this.player.x += dx;
+      }
+      // Vertical sliding collision
+      if (dy !== 0 && !this.isStorePositionBlocked(this.player.x, this.player.y + dy)) {
+        this.player.y += dy;
+      }
+    } else {
+      this.player.walkAnimFrame = 0;
+    }
+  }
+
+  renderStore(ctx) {
+    const storeScale = this.canvas.width / 1024;
+
+    ctx.save();
+    ctx.scale(storeScale, storeScale);
+
+    // 1. Draw minimal store interior background
+    if (this.storeImage && this.storeImage.isLoaded) {
+      ctx.drawImage(this.storeImage, 0, 0, 1024, 1024);
+    } else {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, 0, 1024, 1024);
+    }
+
+    // 2. Draw shelf items
+    if (this.storeItems) {
+      const now = Date.now();
+      for (const item of this.storeItems) {
+        if (item.collected) {
+          // Subtle collected mark on shelf
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
+          ctx.beginPath();
+          ctx.arc(item.shelfX, item.shelfY, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#16a34a';
+          ctx.font = '16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('✅', item.shelfX, item.shelfY);
+          continue;
+        }
+
+        // Golden aura if on player's shopping list
+        if (item.onList) {
+          const auraRadius = 20 + Math.sin(now * 0.006) * 4;
+          ctx.fillStyle = 'rgba(234, 179, 8, 0.45)';
+          ctx.beginPath();
+          ctx.arc(item.shelfX, item.shelfY, auraRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#ca8a04';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(item.shelfX, item.shelfY, auraRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Draw item thumbnail
+        const img = this.shoppingItemImages[item.file];
+        if (img && img.isLoaded) {
+          ctx.drawImage(img, item.shelfX - 18, item.shelfY - 18, 36, 36);
+        } else {
+          ctx.fillStyle = '#3b82f6';
+          ctx.beginPath();
+          ctx.arc(item.shelfX, item.shelfY, 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // 3. Draw Cashier Indicator if all items collected
+    const remainingCount = this.shoppingList ? this.shoppingList.filter(t => !t.collected).length : 1;
+    if (remainingCount === 0) {
+      const bounceOffset = Math.sin(Date.now() * 0.008) * 8;
+      const beaconX = 700;
+      const beaconY = 740 + bounceOffset;
+
+      ctx.save();
+      // Pulsing beacon ring around register counter
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.35)';
+      ctx.beginPath();
+      ctx.arc(700, 800, 38 + Math.sin(Date.now() * 0.006) * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Floating beacon tag
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.roundRect(beaconX - 56, beaconY - 26, 112, 28, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('💳 PAY HERE', beaconX, beaconY - 12);
+      ctx.restore();
+    }
+
+    // 4. Draw Player Character
+    this.drawPlayer(ctx);
+
+    // 5. Draw Nearby Item / Cashier Prompts
+    const nearbyItem = this.getNearbyStoreItem();
+    if (nearbyItem) {
+      const promptX = nearbyItem.shelfX;
+      const promptY = nearbyItem.shelfY - 28;
+      const promptText = nearbyItem.onList ? `🧺 [SPACE] Take ${nearbyItem.name}` : `${nearbyItem.name} (Not on list)`;
+      const bgColor = nearbyItem.onList ? '#15803d' : '#475569';
+      this.drawSpeechBubble(ctx, promptX, promptY, promptText, bgColor);
+    } else if (this.isNearCashier()) {
+      const cashierX = 700;
+      const cashierY = 770;
+      if (remainingCount === 0) {
+        this.drawSpeechBubble(ctx, cashierX, cashierY, '💳 [SPACE] Checkout & Pay!', '#15803d');
+      } else {
+        this.drawSpeechBubble(ctx, cashierX, cashierY, `🛒 Still need ${remainingCount} items!`, '#e11d48');
+      }
+    }
+
+    // 6. Draw floating feedback alert
+    this.drawInWorldAlert(ctx);
+
+    ctx.restore();
+
+    // 7. Draw Confetti on full canvas
+    this.drawConfetti(ctx);
   }
 }
 

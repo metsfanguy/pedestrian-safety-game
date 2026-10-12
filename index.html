@@ -39,6 +39,26 @@
           </div>
         </div>
 
+        <!-- Store Shopping HUD (Shopping List Clipboard & Goal Banner) -->
+        <div id="store-hud" class="store-hud hidden">
+          <div class="shopping-clipboard animate-pop" id="shopping-clipboard">
+            <div class="clipboard-clip"></div>
+            <div class="shopping-list-header">
+              <div class="shopping-title-row">
+                <span class="shopping-icon">📋</span>
+                <span class="shopping-title">GROCERY LIST</span>
+              </div>
+              <span id="store-items-counter" class="store-counter-pill">0/3</span>
+            </div>
+            <div id="store-checklist" class="store-checklist">
+              <!-- Dynamically populated items with checkboxes -->
+            </div>
+            <div id="store-goal-banner" class="store-goal-banner">
+              Find the items on the shelves!
+            </div>
+          </div>
+        </div>
+
     <!-- On-Screen Touch Controls (D-Pad Left + Action Button Right) -->
     <div id="walking-controls" class="walking-controls hidden">
       <!-- Left Side: 4-Way Directional D-Pad -->
@@ -76,6 +96,30 @@
         <div class="title-badge">🚦 PEDESTRIAN SAFETY ADVENTURE</div>
         <h1 class="game-title">Safe Steps<br><span class="subtitle">City Walk!</span></h1>
         <p class="menu-desc">Help your character walk safely through the city to reach their fun destination!</p>
+
+        <!-- Level Mode Selection -->
+        <div class="level-select-section">
+          <h3>Choose Adventure Mode:</h3>
+          <div class="level-options">
+            <button class="level-card selected" data-level="1" id="select-level-1">
+              <div class="level-badge-tag">LEVEL 1</div>
+              <div class="level-icon-box">🧁</div>
+              <div class="level-card-info">
+                <span class="level-title">Bakery Walk</span>
+                <span class="level-subtitle">Neighborhood walk to Sweet Bakery & Park</span>
+              </div>
+            </button>
+
+            <button class="level-card" data-level="2" id="select-level-2">
+              <div class="level-badge-tag level-2-tag">LEVEL 2</div>
+              <div class="level-icon-box">🛒</div>
+              <div class="level-card-info">
+                <span class="level-title">Grocery Store Adventure</span>
+                <span class="level-subtitle">Walk to Fresh Market, shop & pay at register!</span>
+              </div>
+            </button>
+          </div>
+        </div>
 
         <!-- Character Selection -->
         <div class="character-select-section">
@@ -190,6 +234,53 @@
         </button>
       </div> <!-- /#victory-card -->
     </div> <!-- /#victory-modal -->
+
+    <!-- Store Checkout & Receipt Modal (Level 2 Completion) -->
+    <div id="checkout-modal" class="screen-overlay hidden">
+      <div class="receipt-card animate-bounce">
+        <div class="receipt-top-clip"></div>
+        <div class="receipt-header">
+          <div class="receipt-store-title">🛒 FRESH MARKET GROCERY</div>
+          <div class="receipt-sub">PEDESTRIAN SAFETY DISTRICT</div>
+          <div class="receipt-date" id="receipt-date-text">OFFICIAL REGISTER RECEIPT</div>
+        </div>
+        <div class="receipt-dashed-line">----------------------------------------</div>
+        <div class="receipt-items-container" id="receipt-items-container">
+          <!-- Dynamically populated shopping items -->
+        </div>
+        <div class="receipt-dashed-line">----------------------------------------</div>
+        <div class="receipt-totals-section">
+          <div class="receipt-row">
+            <span>ITEMS PURCHASED:</span>
+            <strong id="receipt-count-val">3</strong>
+          </div>
+          <div class="receipt-row receipt-total-highlight">
+            <span>TOTAL PAID:</span>
+            <strong id="receipt-price-val">$5.50</strong>
+          </div>
+        </div>
+        <div class="receipt-stamp-container">
+          <div class="receipt-stamp">PAID IN FULL 💳✨</div>
+        </div>
+
+        <div class="badge-award shopper-award">
+          <div class="medal-icon">🏅</div>
+          <div class="medal-text">
+            <strong>Certified Super Shopper Hero!</strong>
+            <span>Walked all crosswalks safely & checked out like a pro!</span>
+          </div>
+        </div>
+
+        <div class="receipt-buttons-row">
+          <button id="store-play-again-btn" class="big-action-btn pulse-glow">
+            <span>PLAY LEVEL 2 AGAIN!</span> 🛒
+          </button>
+          <button id="store-main-menu-btn" class="secondary-btn">
+            <span>MAIN MENU</span> 🏠
+          </button>
+        </div>
+      </div>
+    </div> <!-- /#checkout-modal -->
 
     <!-- Game Over / Safety Practice Reset Screen -->
     <div id="game-over-modal" class="screen-overlay hidden">
