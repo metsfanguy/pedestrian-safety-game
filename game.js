@@ -543,6 +543,14 @@ class PedestrianGame {
           this.loadImage('assets/characters/girl/fall/girl-fall-06.png'),
           this.loadImage('assets/characters/girl/fall/girl-fall-07.png'),
           this.loadImage('assets/characters/girl/fall/girl-fall-08.png')
+        ],
+        petDog: [
+          this.loadImage('assets/characters/girl/pet_dog/pet_1.png'),
+          this.loadImage('assets/characters/girl/pet_dog/pet_2.png'),
+          this.loadImage('assets/characters/girl/pet_dog/pet_3.png'),
+          this.loadImage('assets/characters/girl/pet_dog/pet_4.png'),
+          this.loadImage('assets/characters/girl/pet_dog/pet_5.png'),
+          this.loadImage('assets/characters/girl/pet_dog/pet_6.png')
         ]
       }
     };
@@ -2588,9 +2596,12 @@ class PedestrianGame {
     } else if (seq.stage === 'PETTING') {
       seq.timer += dt;
 
-      // 7 frames over 2.45s (~0.35s per frame)
+      const charObj = this.sprites[this.selectedChar] || this.sprites.boy;
+      const petFrames = (charObj && charObj.petDog) ? charObj.petDog : this.sprites.boy.petDog;
+      const totalFrames = petFrames ? petFrames.length : 6;
+
       const totalDuration = 2.45;
-      const frame = Math.min(6, Math.floor((seq.timer / totalDuration) * 7));
+      const frame = Math.min(totalFrames - 1, Math.floor((seq.timer / totalDuration) * totalFrames));
       this.player.pettingFrame = frame;
 
       // Floating hearts & sparkles
@@ -4277,10 +4288,12 @@ class PedestrianGame {
       return;
     }
 
-    // 2. IF CHARACTER IS PETTING DOG (7-frame boy animation sequence):
+    // 2. IF CHARACTER IS PETTING DOG (Boy or Girl animation sequence):
     if (this.player.isPettingDog && this.pettingSequence && this.pettingSequence.stage === 'PETTING') {
-      const petFrames = this.sprites.boy.petDog;
-      const fIdx = Math.max(0, Math.min(6, this.player.pettingFrame || 0));
+      const charObj = this.sprites[this.selectedChar] || this.sprites.boy;
+      const petFrames = (charObj && charObj.petDog) ? charObj.petDog : this.sprites.boy.petDog;
+      const maxIdx = petFrames ? (petFrames.length - 1) : 0;
+      const fIdx = Math.max(0, Math.min(maxIdx, this.player.pettingFrame || 0));
       const pSprite = (petFrames && petFrames[fIdx]) ? petFrames[fIdx] : null;
 
       // Ground shadow
@@ -4295,7 +4308,7 @@ class PedestrianGame {
       if (pSprite && pSprite.isLoaded) {
         ctx.drawImage(pSprite, -pW / 2, -pH / 2 - 2, pW, pH);
       } else {
-        ctx.fillStyle = '#1e88e5';
+        ctx.fillStyle = this.selectedChar === 'girl' ? '#e91e63' : '#1e88e5';
         ctx.beginPath();
         ctx.arc(0, 0, 16, 0, Math.PI * 2);
         ctx.fill();
