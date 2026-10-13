@@ -46,7 +46,7 @@ class SoundEffects {
   }
 
   step() {
-    this.playTone(180 + Math.random() * 40, 'triangle', 0.08, 0.04);
+    // Silenced: no sound when walking
   }
 
   correct() {
@@ -66,10 +66,7 @@ class SoundEffects {
   }
 
   carBrake() {
-    if (!this.enabled) return;
-    this.init();
-    this.playTone(380, 'sawtooth', 0.15, 0.05);
-    setTimeout(() => this.playTone(300, 'sawtooth', 0.2, 0.04), 80);
+    // Silenced: no sound when a car hits the brakes
   }
 
   buzz() {
@@ -397,10 +394,11 @@ class PedestrianGame {
     this.safetyChances = 3;
     this.lastSafetyTip = '';
 
-    // Level Mode Selection (Level 1: Bakery Walk, Level 2: Grocery Store Adventure)
+    // Level Mode Selection (Level 1: Bakery Walk, Level 2: Grocery Adventure, Level 3: Just Shopping)
     this.gameLevel = 1;
     this.selectLevel1 = document.getElementById('select-level-1');
     this.selectLevel2 = document.getElementById('select-level-2');
+    this.selectLevel3 = document.getElementById('select-level-3');
 
     // Store HUD & Checkout Modal Elements
     this.storeHud = document.getElementById('store-hud');
@@ -410,6 +408,7 @@ class PedestrianGame {
     this.checkoutModal = document.getElementById('checkout-modal');
     this.checkoutMinigameModal = document.getElementById('checkout-minigame-modal');
     this.homeVictoryModal = document.getElementById('home-victory-modal');
+    this.shoppingVictoryModal = document.getElementById('shopping-victory-modal');
     this.storePlayAgainBtn = document.getElementById('store-play-again-btn');
     this.storeMainMenuBtn = document.getElementById('store-main-menu-btn');
     this.storeBagImage = this.loadImage('assets/shopping/items/57_grocery_bag.png');
@@ -1237,6 +1236,13 @@ class PedestrianGame {
       });
     }
 
+    if (this.selectLevel3) {
+      this.selectLevel3.addEventListener('click', () => {
+        sfx.playTone(660, 'sine', 0.1);
+        this.setLevel(3);
+      });
+    }
+
     // Play Again Button (Victory Modal - Level 1)
     document.getElementById('play-again-btn').addEventListener('click', () => {
       sfx.playTone(523, 'triangle', 0.2);
@@ -1286,12 +1292,16 @@ class PedestrianGame {
     const payCardBtn = document.getElementById('btn-pay-card');
     if (payCardBtn) payCardBtn.addEventListener('click', () => this.handleCheckoutCardTap());
 
-    // Button to start walking back home from checkout
+    // Button to start walking back home or complete shopping spree
     const btnTakeHome = document.getElementById('btn-take-groceries-home');
     if (btnTakeHome) {
       btnTakeHome.addEventListener('click', () => {
         sfx.buttonPress();
-        this.startWalkHome();
+        if (this.gameLevel === 3) {
+          this.triggerShoppingVictory();
+        } else {
+          this.startWalkHome();
+        }
       });
     }
 
@@ -1309,6 +1319,24 @@ class PedestrianGame {
       homeMainMenu.addEventListener('click', () => {
         sfx.buttonPress();
         if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+        this.resetToStartMenu();
+      });
+    }
+
+    // Shopping Victory Modal Buttons (Shopping Only Mode Completion)
+    const shoppingPlayAgain = document.getElementById('shopping-play-again-btn');
+    if (shoppingPlayAgain) {
+      shoppingPlayAgain.addEventListener('click', () => {
+        sfx.playTone(523, 'triangle', 0.2);
+        this.startShoppingOnlyGame();
+      });
+    }
+
+    const shoppingMainMenu = document.getElementById('shopping-main-menu-btn');
+    if (shoppingMainMenu) {
+      shoppingMainMenu.addEventListener('click', () => {
+        sfx.buttonPress();
+        if (this.shoppingVictoryModal) this.shoppingVictoryModal.classList.add('hidden');
         this.resetToStartMenu();
       });
     }
@@ -1632,9 +1660,17 @@ class PedestrianGame {
     if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
     if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
     if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+    if (this.shoppingVictoryModal) this.shoppingVictoryModal.classList.add('hidden');
     if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     this.challengeModal.classList.add('hidden'); // Modal is never used now!
+
+    if (this.gameLevel === 3) {
+      this.isWalkingHome = false;
+      this.hasGroceries = false;
+      this.enterStoreScene();
+      return;
+    }
     this.gameHud.classList.remove('hidden');
     this.progressHud.classList.remove('hidden');
     if (this.walkingControls) this.walkingControls.classList.remove('hidden');
@@ -3168,6 +3204,7 @@ class PedestrianGame {
     if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
     if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
     if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+    if (this.shoppingVictoryModal) this.shoppingVictoryModal.classList.add('hidden');
     if (this.storeHud) this.storeHud.classList.add('hidden');
     if (this.gameOverModal) this.gameOverModal.classList.add('hidden');
     if (this.walkingControls) this.walkingControls.classList.add('hidden');
@@ -4749,12 +4786,30 @@ class PedestrianGame {
       if (level === 2) this.selectLevel2.classList.add('selected');
       else this.selectLevel2.classList.remove('selected');
     }
+    if (this.selectLevel3) {
+      if (level === 3) this.selectLevel3.classList.add('selected');
+      else this.selectLevel3.classList.remove('selected');
+    }
 
     const menuDestIcon = document.getElementById('menu-dest-icon');
     const menuDestTitle = document.getElementById('menu-dest-title');
     const menuDestDesc = document.getElementById('menu-dest-desc');
+    const startBtn = document.getElementById('start-game-btn');
 
-    if (level === 2) {
+    if (level === 3) {
+      this.destination = {
+        title: 'Fresh Market (Store Spree)',
+        icon: '🛒',
+        desc: 'Direct shopping mode: find items on your grocery list and pay at the register!'
+      };
+      if (menuDestIcon) menuDestIcon.textContent = '🛒';
+      if (menuDestTitle) menuDestTitle.textContent = 'Store Shopping Spree';
+      if (menuDestDesc) menuDestDesc.textContent = 'Pick items from your grocery list on the shelves and checkout at the register!';
+      if (this.destinationIconEl) this.destinationIconEl.textContent = '🛒';
+      if (this.destinationTextEl) this.destinationTextEl.textContent = 'Shopping at Fresh Market';
+      if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🛒 Fresh Market';
+      if (startBtn) startBtn.innerHTML = '<span>START SHOPPING!</span> 🛒✨';
+    } else if (level === 2) {
       this.destination = {
         title: 'Fresh Market Grocery Store',
         icon: '🛒',
@@ -4766,6 +4821,7 @@ class PedestrianGame {
       if (this.destinationIconEl) this.destinationIconEl.textContent = '🛒';
       if (this.destinationTextEl) this.destinationTextEl.textContent = 'Heading to Fresh Market';
       if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🛒 Fresh Market';
+      if (startBtn) startBtn.innerHTML = '<span>START WALKING!</span> 🚶💨';
     } else {
       this.destination = {
         title: 'Grandma’s Bakery & Town Park',
@@ -4778,6 +4834,7 @@ class PedestrianGame {
       if (this.destinationIconEl) this.destinationIconEl.textContent = '🧁';
       if (this.destinationTextEl) this.destinationTextEl.textContent = "Heading to Grandma's Bakery";
       if (this.endPointLabelEl) this.endPointLabelEl.textContent = '🧁 Bakery & Park';
+      if (startBtn) startBtn.innerHTML = '<span>START WALKING!</span> 🚶💨';
     }
   }
 
@@ -5183,10 +5240,24 @@ class PedestrianGame {
     const stagePay = document.getElementById('checkout-stage-pay');
     const stageBag = document.getElementById('checkout-stage-bag');
     const stepBadge = document.getElementById('terminal-step-badge');
+    const titleEl = document.getElementById('checkout-bag-stage-title');
+    const descEl = document.getElementById('checkout-bag-stage-desc');
+    const btnTextEl = document.getElementById('btn-take-groceries-text');
 
     if (stagePay) stagePay.classList.add('hidden');
     if (stageBag) stageBag.classList.remove('hidden');
-    if (stepBadge) stepBadge.textContent = 'STEP 3: READY TO WALK HOME! 🛍️';
+
+    if (this.gameLevel === 3) {
+      if (stepBadge) stepBadge.textContent = 'STEP 3: SPREE COMPLETE! 🛍️✨';
+      if (titleEl) titleEl.textContent = 'Groceries Packed & Paid! 🛍️✨';
+      if (descEl) descEl.innerHTML = 'Awesome job finding all your items and paying at the register! Your shopping spree is complete!';
+      if (btnTextEl) btnTextEl.textContent = 'FINISH SHOPPING SPREE! 🎉';
+    } else {
+      if (stepBadge) stepBadge.textContent = 'STEP 3: READY TO WALK HOME! 🛍️';
+      if (titleEl) titleEl.textContent = 'Groceries Packed & Ready! 🛍️';
+      if (descEl) descEl.innerHTML = 'Awesome job paying at the register! Now head out the door and walk <strong>HOME</strong> safely!';
+      if (btnTextEl) btnTextEl.textContent = 'TAKE GROCERIES & WALK HOME! 🚶💨';
+    }
   }
 
   startWalkHome() {
@@ -5423,9 +5494,81 @@ class PedestrianGame {
 
   startLevel2StoreGame() {
     if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+    if (this.shoppingVictoryModal) this.shoppingVictoryModal.classList.add('hidden');
     if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
     if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
     this.setLevel(2);
+    this.startGame();
+  }
+
+  triggerShoppingVictory() {
+    this.state = 'VICTORY';
+    this.player.isWalking = false;
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.mouseControl.isDown = false;
+    this.resetButtonStyles();
+
+    if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    if (this.storeHud) this.storeHud.classList.add('hidden');
+    if (this.walkingControls) this.walkingControls.classList.add('hidden');
+    if (this.gameHud) this.gameHud.classList.add('hidden');
+    if (this.progressHud) this.progressHud.classList.add('hidden');
+
+    const shoppingModal = document.getElementById('shopping-victory-modal');
+    if (shoppingModal) shoppingModal.classList.remove('hidden');
+
+    const purchasedItemsContainer = document.getElementById('shopping-purchased-items');
+    if (purchasedItemsContainer && this.shoppingList) {
+      purchasedItemsContainer.innerHTML = '';
+      this.shoppingList.forEach(item => {
+        const pill = document.createElement('div');
+        pill.className = 'delivered-item-pill animate-pop';
+        pill.innerHTML = `
+          <img src="assets/shopping/items/${item.file}" alt="${item.name}" class="delivered-item-thumb">
+          <span class="delivered-item-name">${item.name}</span>
+        `;
+        purchasedItemsContainer.appendChild(pill);
+      });
+    }
+
+    const itemsCountEl = document.getElementById('shopping-stat-items');
+    if (itemsCountEl && this.shoppingList) {
+      itemsCountEl.textContent = `${this.shoppingList.length} / ${this.shoppingList.length}`;
+    }
+
+    const paidEl = document.getElementById('shopping-stat-paid');
+    if (paidEl) {
+      paidEl.textContent = `$${(this.checkoutTotalDue || 0).toFixed(2)}`;
+    }
+
+    this.confettiParticles = [];
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+    for (let i = 0; i < 110; i++) {
+      this.confettiParticles.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * -this.canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 5,
+        vy: 2 + Math.random() * 5,
+        vRot: (Math.random() - 0.5) * 0.25,
+        rotation: Math.random() * Math.PI,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 9 + Math.random() * 9
+      });
+    }
+
+    sfx.fanfare();
+  }
+
+  startShoppingOnlyGame() {
+    if (this.shoppingVictoryModal) this.shoppingVictoryModal.classList.add('hidden');
+    if (this.homeVictoryModal) this.homeVictoryModal.classList.add('hidden');
+    if (this.checkoutMinigameModal) this.checkoutMinigameModal.classList.add('hidden');
+    if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
+    this.setLevel(3);
     this.startGame();
   }
 

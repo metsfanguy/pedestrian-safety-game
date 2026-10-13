@@ -106,16 +106,25 @@
               <div class="level-icon-box">🧁</div>
               <div class="level-card-info">
                 <span class="level-title">Bakery Walk</span>
-                <span class="level-subtitle">Neighborhood walk to Sweet Bakery & Park</span>
+                <span class="level-subtitle">Walk safely to Bakery & Park</span>
               </div>
             </button>
 
             <button class="level-card" data-level="2" id="select-level-2">
               <div class="level-badge-tag level-2-tag">LEVEL 2</div>
-              <div class="level-icon-box">🛒</div>
+              <div class="level-icon-box">🚶🛒</div>
               <div class="level-card-info">
-                <span class="level-title">Grocery Store Adventure</span>
-                <span class="level-subtitle">Walk to Fresh Market, shop & pay at register!</span>
+                <span class="level-title">Full Grocery Trip</span>
+                <span class="level-subtitle">Walk to store, shop & walk home</span>
+              </div>
+            </button>
+
+            <button class="level-card" data-level="3" id="select-level-3">
+              <div class="level-badge-tag level-3-tag">JUST SHOPPING</div>
+              <div class="level-icon-box">🛒✨</div>
+              <div class="level-card-info">
+                <span class="level-title">Store Spree</span>
+                <span class="level-subtitle">Direct shopping & cash register!</span>
               </div>
             </button>
           </div>
@@ -309,12 +318,12 @@
           <div class="bag-handoff-card">
             <img src="assets/shopping/items/57_grocery_bag.png" alt="Packed Grocery Bag" class="bag-handoff-img animate-bounce">
             <div class="bag-handoff-info">
-              <h3>Groceries Packed & Ready! 🛍️</h3>
-              <p>Awesome job paying at the register! Now head out the door and walk <strong>HOME</strong> safely!</p>
+              <h3 id="checkout-bag-stage-title">Groceries Packed & Ready! 🛍️</h3>
+              <p id="checkout-bag-stage-desc">Awesome job paying at the register! Now head out the door and walk <strong>HOME</strong> safely!</p>
             </div>
           </div>
           <button id="btn-take-groceries-home" class="big-action-btn pulse-glow">
-            <span>TAKE GROCERIES & WALK HOME! 🚶💨</span>
+            <span id="btn-take-groceries-text">TAKE GROCERIES & WALK HOME! 🚶💨</span>
           </button>
         </div>
       </div>
@@ -364,6 +373,51 @@
         </div>
       </div>
     </div> <!-- /#home-victory-modal -->
+
+    <!-- Shopping Victory Modal (Shopping Only Mode Complete) -->
+    <div id="shopping-victory-modal" class="screen-overlay hidden">
+      <div class="victory-card animate-bounce">
+        <div class="victory-confetti-banner">🎉 SHOPPING SPREE COMPLETE! 🎉</div>
+        <div class="victory-icon">🛒✨</div>
+        <h2 class="victory-title">Supermarket Superstar!</h2>
+        <p class="victory-sub">You navigated the grocery aisles, found all your items, scanned them, and paid in full!</p>
+
+        <div class="delivered-groceries-card">
+          <div class="delivered-card-title">ITEMS PURCHASED:</div>
+          <div class="delivered-items-row" id="shopping-purchased-items">
+            <!-- 3 item thumbnails with names -->
+          </div>
+        </div>
+
+        <div class="victory-stats-card">
+          <div class="stat-box">
+            <span class="stat-num" id="shopping-stat-items">3 / 3</span>
+            <span class="stat-label">Items Found 🧺</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="shopping-stat-paid">$0.00</span>
+            <span class="stat-label">Paid in Full 💳</span>
+          </div>
+        </div>
+
+        <div class="badge-award">
+          <div class="medal-icon">🌟</div>
+          <div class="medal-text">
+            <strong>Certified Master Shopper!</strong>
+            <span>Quick, smart, and independent shopping & register checkout master!</span>
+          </div>
+        </div>
+
+        <div class="receipt-buttons-row">
+          <button id="shopping-play-again-btn" class="big-action-btn pulse-glow">
+            <span>SHOP AGAIN! (NEW LIST)</span> 🔄🛒
+          </button>
+          <button id="shopping-main-menu-btn" class="secondary-btn">
+            <span>MAIN MENU</span> 🏠
+          </button>
+        </div>
+      </div>
+    </div> <!-- /#shopping-victory-modal -->
 
     <!-- Game Over / Safety Practice Reset Screen -->
     <div id="game-over-modal" class="screen-overlay hidden">
