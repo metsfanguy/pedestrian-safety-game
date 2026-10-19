@@ -1517,7 +1517,7 @@ class PedestrianGame {
 
     // Drag and Drop support onto Cash Register Tray
     const dropZone = document.getElementById('cash-drop-zone');
-    const currencyButtons = document.querySelectorAll('.currency-drawer .money-btn');
+    const currencyButtons = document.querySelectorAll('.currency-drawer .money-item, .currency-drawer .money-btn');
 
     currencyButtons.forEach(btn => {
       btn.addEventListener('dragstart', (e) => {
@@ -5623,8 +5623,23 @@ class PedestrianGame {
       if (placeholder) placeholder.remove();
 
       const token = document.createElement('span');
-      token.className = `tray-token animate-pop ${type === 'bill' ? 'token-bill' : 'token-coin'}`;
-      token.textContent = label || (amount >= 1.0 ? `$${amount.toFixed(0)}` : `${Math.round(amount * 100)}¢`);
+      token.className = `tray-token animate-pop ${type === 'bill' ? 'tray-token-bill' : 'tray-token-coin'}`;
+
+      if (type === 'bill') {
+        const file = amount === 5 ? 'bill_5.jpg' : 'bill_1.jpg';
+        token.innerHTML = `
+          <img src="assets/shopping/currency/${file}" alt="$${amount}" class="tray-mini-bill">
+          <span class="tray-val-label">$${amount}</span>
+        `;
+      } else {
+        const coinMap = { 0.25: 'coin_quarter.png', 0.10: 'coin_dime.png', 0.05: 'coin_nickel.png', 0.01: 'coin_penny.png' };
+        const file = coinMap[amount] || 'coin_quarter.png';
+        token.innerHTML = `
+          <img src="assets/shopping/currency/${file}" alt="${label}" class="tray-mini-coin">
+          <span class="tray-val-label">${label}</span>
+        `;
+      }
+
       trayEl.appendChild(token);
       trayEl.scrollTop = trayEl.scrollHeight;
     }

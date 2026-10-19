@@ -2065,27 +2065,37 @@ body, html {
 /* ==========================================================================
    Checkout Mini-Game Modal
    ========================================================================== */
+.hidden,
+.checkout-stage.hidden {
+  display: none !important;
+}
+
 .terminal-card {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
-  padding: 18px 16px;
-  max-width: 440px;
-  width: 100%;
+  border-radius: 18px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7);
+  padding: 12px 14px;
+  max-width: 480px;
+  width: 95%;
+  max-height: 94%;
+  display: flex;
+  flex-direction: column;
   text-align: center;
   border: 3.5px solid #0f172a;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
   font-family: 'Fredoka', sans-serif;
+  box-sizing: border-box;
 }
 
 .terminal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 2px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .terminal-brand-pill {
@@ -2111,7 +2121,7 @@ body, html {
 .checkout-stage {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stage-instruction {
@@ -2458,146 +2468,205 @@ body, html {
   gap: 6px;
 }
 
-.money-btn {
+/* Real Cash & Coins Wallet Drawer */
+.currency-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   background: #f8fafc;
-  border: 2px solid #cbd5e1;
+  padding: 8px 10px;
   border-radius: 12px;
-  padding: 8px 6px;
-  cursor: grab;
+  border: 1.5px solid #e2e8f0;
+}
+
+.currency-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.currency-group-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #475569;
+  text-align: left;
+  margin: 2px 0 3px 2px;
+  letter-spacing: 0.4px;
+}
+
+.currency-row {
+  display: grid;
+  align-items: center;
+}
+
+.bills-row {
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.coins-row {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.money-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  transition: all 0.15s ease;
-  font-family: inherit;
+  cursor: grab;
   user-select: none;
   touch-action: manipulation;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
+  padding: 2px;
+  border-radius: 8px;
+  outline: none;
 }
 
-.money-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+.money-item:hover,
+.money-item:focus-visible {
+  transform: translateY(-4px) scale(1.04);
 }
 
-.money-btn:active {
+.money-item:active {
   cursor: grabbing;
   transform: scale(0.96);
 }
 
-.money-btn.dragging {
-  opacity: 0.45;
-  transform: scale(0.92);
+.money-item.dragging {
+  opacity: 0.35;
+  transform: scale(0.9);
 }
 
-/* Paper Bills Art */
-.bill-btn {
-  background: #f0fdf4;
-  border-color: #86efac;
-}
-
-.bill-art {
+/* Authentic Paper Bills ($5 and $1) */
+.bill-item {
   width: 100%;
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  border: 1.8px solid #16a34a;
-  border-radius: 6px;
-  padding: 6px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 800;
-  box-shadow: inset 0 0 0 1px #86efac;
 }
 
-.bill-corner {
-  font-size: 0.65rem;
-  font-family: 'Press Start 2P', monospace;
-  color: #15803d;
+.bill-shadow-wrap {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #ffffff;
 }
 
-.bill-center {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #0f172a;
+.bill-item:hover .bill-shadow-wrap {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
 }
 
-.bill-five .bill-art {
-  background: linear-gradient(135deg, #ccfbf1 0%, #a7f3d0 100%);
-  border-color: #0d9488;
+.bill-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2.3 / 1;
+  display: block;
+  object-fit: fill;
+  border-radius: 4px;
 }
 
-.bill-five .bill-corner {
-  color: #0f766e;
-}
-
-/* Coins Art */
-.coin-btn {
-  background: #fffbeb;
-  border-color: #fde68a;
-  padding: 6px 3px;
-}
-
-.coin-disc {
-  border-radius: 50%;
+/* Authentic American Coins */
+.coin-disc-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+  transition: filter 0.15s ease;
+}
+
+.coin-item:hover .coin-disc-wrap {
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.48));
+}
+
+.coin-img {
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.15s ease;
+}
+
+/* Proportional Coin Diameters */
+.coin-img-quarter {
+  width: 58px;
+  height: 58px;
+}
+
+.coin-img-nickel {
+  width: 52px;
+  height: 52px;
+}
+
+.coin-img-dime {
+  width: 42px;
+  height: 42px;
+}
+
+.coin-img-penny {
+  width: 48px;
+  height: 48px;
+}
+
+.currency-tag {
+  font-size: 0.65rem;
   font-weight: 800;
+  color: #1e293b;
+  margin-top: 3px;
+  background: #ffffff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Cash Tray Mini Tokens */
+.tray-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   user-select: none;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
 }
 
-/* Quarter: Largest Silver Coin (25¢) */
-.coin-disc-quarter {
-  width: 44px;
-  height: 44px;
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5e1 55%, #94a3b8 100%);
-  border: 2px solid #64748b;
-  color: #1e293b;
-  font-size: 0.82rem;
+.tray-token-bill {
+  background: #f0fdf4;
+  border: 1.5px solid #16a34a;
+  color: #15803d;
 }
 
-/* Dime: Smallest Silver Coin (10¢) */
-.coin-disc-dime {
-  width: 32px;
-  height: 32px;
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 60%, #cbd5e1 100%);
-  border: 1.8px solid #94a3b8;
-  color: #0f172a;
-  font-size: 0.68rem;
+.tray-token-coin {
+  background: #fffbeb;
+  border: 1.5px solid #d97706;
+  color: #92400e;
 }
 
-/* Nickel: Medium Thick Silver Coin (5¢) */
-.coin-disc-nickel {
-  width: 38px;
-  height: 38px;
-  background: radial-gradient(circle at 35% 35%, #f8fafc 0%, #cbd5e1 60%, #94a3b8 100%);
-  border: 2.2px solid #64748b;
-  color: #1e293b;
-  font-size: 0.78rem;
+.tray-mini-bill {
+  width: 26px;
+  height: auto;
+  aspect-ratio: 2.3 / 1;
+  border-radius: 2px;
+  display: block;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Penny: Copper Bronze Coin (1¢) */
-.coin-disc-penny {
-  width: 36px;
-  height: 36px;
-  background: radial-gradient(circle at 35% 35%, #fbbf24 0%, #d97706 50%, #92400e 100%);
-  border: 2px solid #78350f;
-  color: #ffffff;
-  text-shadow: 0 1px 2px #451a03;
-  font-size: 0.74rem;
+.tray-mini-coin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.coin-name {
-  font-size: 0.75rem;
+.tray-val-label {
+  font-size: 0.7rem;
   font-weight: 800;
-  color: #1e293b;
-  margin-top: 1px;
-}
-
-.money-sub {
-  font-size: 0.62rem;
-  color: #64748b;
-  font-weight: 600;
 }
 
 /* Stage 3: Bag Packaging */

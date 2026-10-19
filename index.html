@@ -334,67 +334,61 @@
           <div class="currency-drawer">
             <!-- Paper Bills (Cash) -->
             <div class="currency-group bills-group">
-              <div class="currency-group-title">💵 PAPER BILLS</div>
+              <div class="currency-group-title">💵 PAPER BILLS (DRAG OR CLICK)</div>
               <div class="currency-row bills-row">
-                <button class="money-btn bill-btn" id="btn-pay-five" data-amount="5.00" data-type="bill" data-label="$5" draggable="true" title="Drag or click $5.00 Bill">
-                  <div class="bill-art bill-five">
-                    <span class="bill-corner top-left">$5</span>
-                    <span class="bill-center">💵 $5.00</span>
-                    <span class="bill-corner bottom-right">$5</span>
+                <!-- $5 Bill -->
+                <div class="money-item bill-item" id="btn-pay-five" data-amount="5.00" data-type="bill" data-label="$5" draggable="true" title="Drag or click $5.00 Bill to pay" tabindex="0" role="button">
+                  <div class="bill-shadow-wrap">
+                    <img src="assets/shopping/currency/bill_5.jpg" alt="$5 Dollar Bill" class="bill-img">
                   </div>
-                  <span class="money-sub">Five Dollars</span>
-                </button>
+                  <span class="currency-tag">$5.00 Bill</span>
+                </div>
 
-                <button class="money-btn bill-btn" id="btn-pay-one" data-amount="1.00" data-type="bill" data-label="$1" draggable="true" title="Drag or click $1.00 Bill">
-                  <div class="bill-art bill-one">
-                    <span class="bill-corner top-left">$1</span>
-                    <span class="bill-center">💵 $1.00</span>
-                    <span class="bill-corner bottom-right">$1</span>
+                <!-- $1 Bill -->
+                <div class="money-item bill-item" id="btn-pay-one" data-amount="1.00" data-type="bill" data-label="$1" draggable="true" title="Drag or click $1.00 Bill to pay" tabindex="0" role="button">
+                  <div class="bill-shadow-wrap">
+                    <img src="assets/shopping/currency/bill_1.jpg" alt="$1 Dollar Bill" class="bill-img">
                   </div>
-                  <span class="money-sub">One Dollar</span>
-                </button>
+                  <span class="currency-tag">$1.00 Bill</span>
+                </div>
               </div>
             </div>
 
             <!-- American Coins -->
             <div class="currency-group coins-group">
-              <div class="currency-group-title">🪙 AMERICAN COINS</div>
+              <div class="currency-group-title">🪙 AMERICAN COINS (DRAG OR CLICK)</div>
               <div class="currency-row coins-row">
                 <!-- Quarter (25¢) -->
-                <button class="money-btn coin-btn coin-quarter" id="btn-pay-quarter" data-amount="0.25" data-type="coin" data-label="25¢" draggable="true" title="Drag or click 25¢ Quarter">
-                  <div class="coin-disc coin-disc-quarter">
-                    <span class="coin-text">25¢</span>
+                <div class="money-item coin-item coin-quarter" id="btn-pay-quarter" data-amount="0.25" data-type="coin" data-label="25¢" draggable="true" title="Drag or click 25¢ Quarter to pay" tabindex="0" role="button">
+                  <div class="coin-disc-wrap">
+                    <img src="assets/shopping/currency/coin_quarter.png" alt="Quarter (25¢)" class="coin-img coin-img-quarter">
                   </div>
-                  <span class="coin-name">Quarter</span>
-                  <span class="money-sub">25 Cents</span>
-                </button>
+                  <span class="currency-tag">25¢ Quarter</span>
+                </div>
 
                 <!-- Dime (10¢) -->
-                <button class="money-btn coin-btn coin-dime" id="btn-pay-dime" data-amount="0.10" data-type="coin" data-label="10¢" draggable="true" title="Drag or click 10¢ Dime">
-                  <div class="coin-disc coin-disc-dime">
-                    <span class="coin-text">10¢</span>
+                <div class="money-item coin-item coin-dime" id="btn-pay-dime" data-amount="0.10" data-type="coin" data-label="10¢" draggable="true" title="Drag or click 10¢ Dime to pay" tabindex="0" role="button">
+                  <div class="coin-disc-wrap">
+                    <img src="assets/shopping/currency/coin_dime.png" alt="Dime (10¢)" class="coin-img coin-img-dime">
                   </div>
-                  <span class="coin-name">Dime</span>
-                  <span class="money-sub">10 Cents</span>
-                </button>
+                  <span class="currency-tag">10¢ Dime</span>
+                </div>
 
                 <!-- Nickel (5¢) -->
-                <button class="money-btn coin-btn coin-nickel" id="btn-pay-nickel" data-amount="0.05" data-type="coin" data-label="5¢" draggable="true" title="Drag or click 5¢ Nickel">
-                  <div class="coin-disc coin-disc-nickel">
-                    <span class="coin-text">5¢</span>
+                <div class="money-item coin-item coin-nickel" id="btn-pay-nickel" data-amount="0.05" data-type="coin" data-label="5¢" draggable="true" title="Drag or click 5¢ Nickel to pay" tabindex="0" role="button">
+                  <div class="coin-disc-wrap">
+                    <img src="assets/shopping/currency/coin_nickel.png" alt="Nickel (5¢)" class="coin-img coin-img-nickel">
                   </div>
-                  <span class="coin-name">Nickel</span>
-                  <span class="money-sub">5 Cents</span>
-                </button>
+                  <span class="currency-tag">5¢ Nickel</span>
+                </div>
 
                 <!-- Penny (1¢) -->
-                <button class="money-btn coin-btn coin-penny" id="btn-pay-penny" data-amount="0.01" data-type="coin" data-label="1¢" draggable="true" title="Drag or click 1¢ Penny">
-                  <div class="coin-disc coin-disc-penny">
-                    <span class="coin-text">1¢</span>
+                <div class="money-item coin-item coin-penny" id="btn-pay-penny" data-amount="0.01" data-type="coin" data-label="1¢" draggable="true" title="Drag or click 1¢ Penny to pay" tabindex="0" role="button">
+                  <div class="coin-disc-wrap">
+                    <img src="assets/shopping/currency/coin_penny.png" alt="Penny (1¢)" class="coin-img coin-img-penny">
                   </div>
-                  <span class="coin-name">Penny</span>
-                  <span class="money-sub">1 Cent</span>
-                </button>
+                  <span class="currency-tag">1¢ Penny</span>
+                </div>
               </div>
             </div>
           </div>
