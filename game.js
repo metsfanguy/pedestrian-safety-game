@@ -150,6 +150,14 @@ class SoundEffects {
     this.playRetroPulse(160, 0.2, 'sawtooth', 0.15, 120);
   }
 
+  // Kid-Friendly "Whoops!" Error Tone
+  whoops() {
+    if (!this.enabled) return;
+    this.init();
+    this.playRetroPulse(360, 0.12, 'triangle', 0.18, 220);
+    setTimeout(() => this.playRetroPulse(190, 0.18, 'sawtooth', 0.15, 110), 90);
+  }
+
   // Lost Safety Chance / Heart Lost (Retro hit/damage sound)
   loseChance() {
     if (!this.enabled) return;
@@ -5641,7 +5649,7 @@ class PedestrianGame {
     document.querySelectorAll('.hint-highlight').forEach(el => el.classList.remove('hint-highlight'));
   }
 
-  handleCashierHint() {
+  handleCashierHint(isAuto = false) {
     if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.001) return;
     this.clearCashierHintHighlights();
 
@@ -5678,7 +5686,11 @@ class PedestrianGame {
 
     const cashierSpeechEl = document.getElementById('cashier-speech-msg');
     if (cashierSpeechEl) {
-      cashierSpeechEl.textContent = `💡 Hint: ${tip}`;
+      if (isAuto) {
+        cashierSpeechEl.textContent = `"Whoops! Too much! You only need $${remaining.toFixed(2)}. Try the ${targetName}!"`;
+      } else {
+        cashierSpeechEl.textContent = `💡 Hint: ${tip}`;
+      }
     }
 
     const targetEl = document.getElementById(targetId);
@@ -5689,13 +5701,83 @@ class PedestrianGame {
       }, 3500);
     }
 
-    sfx.menuCursor();
+    if (!isAuto) {
+      sfx.menuCursor();
+    }
+  }
+
+  spawnFloatingWhoopsParticle(text) {
+    const wrapper = document.querySelector('.register-drop-zone-wrapper');
+    if (!wrapper) return;
+
+    const particle = document.createElement('div');
+    particle.className = 'floating-cash-particle whoops';
+    particle.textContent = `⚠️ ${text}`;
+    particle.style.left = '50%';
+    particle.style.transform = 'translateX(-50%)';
+    particle.style.top = '8px';
+
+    wrapper.appendChild(particle);
+    setTimeout(() => {
+      if (particle.parentNode) particle.remove();
+    }, 1100);
+  }
+
+  handleCheckoutOverpayment(amount, type = 'coin', label = '', wouldBeTotal = 0) {
+    const remaining = Math.round((this.checkoutTotalDue - this.checkoutPaidSoFar) * 100) / 100;
+    const overAmount = Math.round((wouldBeTotal - this.checkoutTotalDue) * 100) / 100;
+    const itemLabel = type === 'bill' ? `$${amount.toFixed(0)} bill` : `${label} coin`;
+
+    // 1. Playful whoops audio feedback
+    sfx.whoops();
+
+    // 2. Visual bounce/shake on register screen and drop tray
+    const screenEl = document.querySelector('.register-display-screen');
+    const dropZone = document.getElementById('cash-drop-zone');
+    if (screenEl) {
+      screenEl.classList.remove('shake-whoops');
+      void screenEl.offsetWidth; // force reflow
+      screenEl.classList.add('shake-whoops');
+      setTimeout(() => screenEl.classList.remove('shake-whoops'), 450);
+    }
+    if (dropZone) {
+      dropZone.classList.remove('shake-whoops');
+      void dropZone.offsetWidth;
+      dropZone.classList.add('shake-whoops');
+      setTimeout(() => dropZone.classList.remove('shake-whoops'), 450);
+    }
+
+    // 3. Floating "Whoops! Too much!" particle
+    this.spawnFloatingWhoopsParticle('Whoops! Too much!');
+
+    // 4. Status message with temporary warning
+    const statusEl = document.getElementById('register-status-msg');
+    if (statusEl) {
+      statusEl.textContent = `⚠️ Whoops! That ${itemLabel} is too much (over by $${overAmount.toFixed(2)})!`;
+      statusEl.classList.add('status-whoops');
+      setTimeout(() => {
+        if (statusEl.classList.contains('status-whoops')) {
+          statusEl.classList.remove('status-whoops');
+          statusEl.textContent = `Remaining due: $${remaining.toFixed(2)} (Pick a smaller bill/coin!) 💵`;
+        }
+      }, 2600);
+    }
+
+    // 5. Automatically give friendly Cashier Sam guidance and highlight a bill/coin that fits!
+    this.handleCashierHint(true);
   }
 
   handleCheckoutMoneyInput(amount, type = 'coin', label = '') {
     if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.0001) return;
 
-    this.checkoutPaidSoFar = Math.round((this.checkoutPaidSoFar + amount) * 100) / 100;
+    // Strict validation: If adding this money exceeds total due, reject it!
+    const wouldBeTotal = Math.round((this.checkoutPaidSoFar + amount) * 100) / 100;
+    if (wouldBeTotal > this.checkoutTotalDue + 0.0001) {
+      this.handleCheckoutOverpayment(amount, type, label, wouldBeTotal);
+      return;
+    }
+
+    this.checkoutPaidSoFar = wouldBeTotal;
     this.checkoutHistory.push({ amount, type, label });
 
     const dueEl = document.getElementById('register-due-val');

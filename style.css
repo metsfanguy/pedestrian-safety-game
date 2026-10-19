@@ -2788,6 +2788,29 @@ body, html {
   border: 1.5px solid #fde047;
 }
 
+.floating-cash-particle.whoops {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1.5px solid #fca5a5;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.4);
+}
+
+@keyframes shakeWhoops {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.shake-whoops {
+  animation: shakeWhoops 0.38s ease-in-out !important;
+}
+
+.register-status-msg.status-whoops {
+  color: #ef4444;
+  font-weight: 800;
+  animation: shakeWhoops 0.38s ease-in-out;
+}
+
 @keyframes floatUpFade {
   0% {
     opacity: 0;
