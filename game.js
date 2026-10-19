@@ -11,6 +11,12 @@ class SoundEffects {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    this.bgmEnabled = true;
+    this.bgmIsPlaying = false;
+    this.bgmTimer = null;
+    this.bgmStep = 0;
+    this.masterGain = null;
+    this.bgmGain = null;
   }
 
   init() {
@@ -18,159 +24,224 @@ class SoundEffects {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+
+        this.bgmGain = this.ctx.createGain();
+        this.bgmGain.gain.setValueAtTime(0.045, this.ctx.currentTime);
+        this.bgmGain.connect(this.masterGain);
       }
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
     }
   }
 
-  playTone(freq, type = 'sine', duration = 0.2, gainLevel = 0.15) {
+  // Core retro pulse tone with warm low-pass filtering and snappy ADSR envelope
+  playRetroPulse(freq, duration = 0.15, type = 'square', gainLevel = 0.12, sweepTo = null, filterFreq = 3800) {
     if (!this.enabled) return;
     this.init();
     if (!this.ctx) return;
 
     try {
+      const t0 = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(filterFreq, t0);
+
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-      gain.gain.setValueAtTime(gainLevel, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      osc.frequency.setValueAtTime(freq, t0);
+      if (sweepTo) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, sweepTo), t0 + duration);
+      }
 
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      // Snappy retro envelope: instant attack, punchy decay, gentle release
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(gainLevel, t0 + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
 
-      osc.start();
-      osc.stop(this.ctx.currentTime + duration);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain || this.ctx.destination);
+
+      osc.start(t0);
+      osc.stop(t0 + duration);
     } catch (e) {
       console.warn("Audio error:", e);
     }
   }
 
+  // Backward-compatible method
+  playTone(freq, type = 'square', duration = 0.15, gainLevel = 0.12) {
+    this.playRetroPulse(freq, duration, type === 'sine' ? 'square' : type, gainLevel);
+  }
+
   step() {
-    // Silenced: no sound when walking
-  }
-
-  correct() {
-    if (!this.enabled) return;
-    this.init();
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-    notes.forEach((freq, idx) => {
-      setTimeout(() => this.playTone(freq, 'sine', 0.25, 0.12), idx * 90);
-    });
-  }
-
-  wrong() {
-    if (!this.enabled) return;
-    this.init();
-    this.playTone(260, 'sawtooth', 0.18, 0.08);
-    setTimeout(() => this.playTone(210, 'sawtooth', 0.25, 0.08), 120);
+    // Silenced per user request: no sound when walking
   }
 
   carBrake() {
-    // Silenced: no sound when a car hits the brakes
+    // Silenced per user request: no sound when cars hit the brakes
   }
 
+  // Retro Menu Navigation Blip (750Hz -> 1050Hz fast pulse)
+  menuCursor() {
+    this.playRetroPulse(750, 0.035, 'square', 0.09, 1050);
+  }
+
+  // Retro Menu Confirmation Chime (B5 to E6 ascending dual chirp)
+  menuSelect() {
+    if (!this.enabled) return;
+    this.init();
+    this.playRetroPulse(587.33, 0.05, 'square', 0.11, 880);
+    setTimeout(() => this.playRetroPulse(880, 0.08, 'square', 0.12, 1174), 45);
+  }
+
+  // Classic Retro Button Press
+  buttonPress() {
+    this.menuSelect();
+  }
+
+  // Start Adventure Heroic Fanfare (C5 -> E5 -> G5 -> C6)
+  startAdventure() {
+    if (!this.enabled) return;
+    this.init();
+    const notes = [
+      { f: 523.25, d: 0.08, t: 0 },
+      { f: 659.25, d: 0.08, t: 80 },
+      { f: 783.99, d: 0.09, t: 160 },
+      { f: 1046.50, d: 0.28, t: 240 }
+    ];
+    notes.forEach(n => {
+      setTimeout(() => this.playRetroPulse(n.f, n.d, 'square', 0.15), n.t);
+    });
+    // Start background music softly after start fanfare
+    setTimeout(() => {
+      if (this.bgmEnabled) this.startBGM();
+    }, 700);
+  }
+
+  // Correct Answer / Successful Safety Action (Sparkling level-up arpeggio)
+  correct() {
+    if (!this.enabled) return;
+    this.init();
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playRetroPulse(freq, 0.14, 'square', 0.12), idx * 65);
+    });
+  }
+
+  // Wrong Action / Safety Mistake (Classic 2-tone retro error buzz)
+  wrong() {
+    if (!this.enabled) return;
+    this.init();
+    this.playRetroPulse(150, 0.09, 'sawtooth', 0.16);
+    setTimeout(() => this.playRetroPulse(105, 0.14, 'sawtooth', 0.18), 100);
+  }
+
+  // Buzz tone
   buzz() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(180, 'sawtooth', 0.25, 0.12);
+    this.playRetroPulse(160, 0.2, 'sawtooth', 0.15, 120);
   }
 
+  // Lost Safety Chance / Heart Lost (Retro hit/damage sound)
   loseChance() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(330, 'sawtooth', 0.2, 0.12);
-    setTimeout(() => this.playTone(220, 'sawtooth', 0.3, 0.15), 110);
+    this.playRetroPulse(320, 0.18, 'sawtooth', 0.18, 90);
+    setTimeout(() => this.playRetroPulse(180, 0.22, 'square', 0.16, 75), 90);
   }
 
+  // Game Over Melancholy Cadence (G4 -> F4 -> Eb4 -> C4)
   gameOver() {
     if (!this.enabled) return;
     this.init();
-    const notes = [392, 349.23, 329.63, 261.63];
-    notes.forEach((freq, idx) => {
-      setTimeout(() => this.playTone(freq, 'sine', 0.3, 0.16), idx * 160);
+    this.duckBGM(3.0);
+    const notes = [
+      { f: 392.00, d: 0.18, t: 0 },
+      { f: 349.23, d: 0.18, t: 160 },
+      { f: 311.13, d: 0.22, t: 320 },
+      { f: 261.63, d: 0.45, t: 500 }
+    ];
+    notes.forEach(n => {
+      setTimeout(() => this.playRetroPulse(n.f, n.d, 'triangle', 0.18), n.t);
     });
   }
 
   tick() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(850, 'sine', 0.04, 0.06);
+    this.playRetroPulse(920, 0.03, 'square', 0.05);
   }
 
   walkSignalChirp() {
     if (!this.enabled) return;
     this.init();
     for (let i = 0; i < 4; i++) {
-      setTimeout(() => this.playTone(1350, 'sine', 0.06, 0.08), i * 130);
+      setTimeout(() => {
+        this.playRetroPulse(1280, 0.05, 'square', 0.08, 1400);
+      }, i * 130);
     }
   }
 
   thud() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(130, 'triangle', 0.22, 0.2);
-    setTimeout(() => this.playTone(85, 'sine', 0.28, 0.18), 50);
+    this.playRetroPulse(130, 0.18, 'triangle', 0.2, 55);
   }
 
-  buttonPress() {
-    if (!this.enabled) return;
-    this.init();
-    this.playTone(880, 'sine', 0.08, 0.15);
-    setTimeout(() => this.playTone(1174, 'sine', 0.12, 0.12), 60);
-  }
-
-  fanfare() {
-    if (!this.enabled) return;
-    this.init();
-    const notes = [392, 523, 659, 784, 1046];
-    notes.forEach((freq, idx) => {
-      setTimeout(() => this.playTone(freq, 'triangle', 0.35, 0.15), idx * 120);
-    });
-  }
-
-  cyberChime() {
-    if (!this.enabled) return;
-    this.init();
-    const freqs = [440, 554.37, 659.25, 880, 1108.73];
-    freqs.forEach((freq, idx) => {
-      setTimeout(() => this.playTone(freq, 'sine', 0.16, 0.08), idx * 70);
-    });
-  }
-
+  // Iconic Item Pickup Fanfare ("Ta-da-da-DAAA!")
   itemPickup() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(587.33, 'sine', 0.15, 0.12);
-    setTimeout(() => this.playTone(880, 'sine', 0.18, 0.14), 70);
+    const notes = [
+      { f: 698.46, d: 0.09, t: 0 },   // F5
+      { f: 880.00, d: 0.09, t: 80 },  // A5
+      { f: 1046.50, d: 0.11, t: 160 },// C6
+      { f: 1396.91, d: 0.32, t: 250 } // F6
+    ];
+    notes.forEach(n => {
+      setTimeout(() => this.playRetroPulse(n.f, n.d, 'square', 0.15), n.t);
+    });
   }
 
+  // Retro Cash Register Jingle (High bell + coin cascades)
   cashRegister() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(1760, 'sine', 0.35, 0.2);
-    setTimeout(() => this.playTone(2349, 'triangle', 0.4, 0.2), 90);
-    setTimeout(() => this.playTone(3520, 'sine', 0.45, 0.15), 180);
-    setTimeout(() => this.playTone(180, 'sawtooth', 0.12, 0.08), 240);
+    // High register bell
+    this.playRetroPulse(2093.00, 0.15, 'square', 0.14);
+    setTimeout(() => this.playRetroPulse(2793.83, 0.25, 'triangle', 0.18), 60);
+    // Cascading coin drops
+    const coins = [1975, 1567, 1318, 1046];
+    coins.forEach((freq, idx) => {
+      setTimeout(() => this.playRetroPulse(freq, 0.07, 'square', 0.12), 140 + idx * 55);
+    });
   }
 
   doorChime() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(783.99, 'sine', 0.25, 0.15);
-    setTimeout(() => this.playTone(659.25, 'sine', 0.3, 0.15), 140);
+    this.playRetroPulse(1046.50, 0.15, 'square', 0.12);
+    setTimeout(() => this.playRetroPulse(783.99, 0.22, 'triangle', 0.14), 110);
   }
 
   barcodeScan() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(2400, 'sine', 0.08, 0.18);
+    this.playRetroPulse(2400, 0.06, 'square', 0.14, 2550);
   }
 
   coinClink() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(1975, 'sine', 0.06, 0.12);
-    setTimeout(() => this.playTone(2637, 'sine', 0.08, 0.1), 35);
+    this.playRetroPulse(1975, 0.05, 'square', 0.11, 2637);
   }
 
   guardWhistle() {
@@ -183,32 +254,32 @@ class SoundEffects {
       const osc2 = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
-      osc1.type = 'sine';
+      osc1.type = 'square';
       osc2.type = 'triangle';
       osc1.frequency.setValueAtTime(2600, t0);
       osc2.frequency.setValueAtTime(2850, t0);
 
-      // Whistle vibrato / pea trill
+      // Pea whistle vibrato (28Hz trill)
       const lfo = this.ctx.createOscillator();
       const lfoGain = this.ctx.createGain();
       lfo.frequency.setValueAtTime(28, t0);
-      lfoGain.gain.setValueAtTime(100, t0);
+      lfoGain.gain.setValueAtTime(90, t0);
       lfo.connect(osc1.frequency);
       lfo.connect(osc2.frequency);
 
       gain.gain.setValueAtTime(0.12, t0);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
 
       osc1.connect(gain);
       osc2.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
 
       lfo.start(t0);
       osc1.start(t0);
       osc2.start(t0);
-      lfo.stop(t0 + 0.35);
-      osc1.stop(t0 + 0.35);
-      osc2.stop(t0 + 0.35);
+      lfo.stop(t0 + 0.32);
+      osc1.stop(t0 + 0.32);
+      osc2.stop(t0 + 0.32);
     } catch (e) {
       console.warn("Whistle error:", e);
     }
@@ -219,23 +290,163 @@ class SoundEffects {
     this.init();
     const freqs = [587.33, 880, 1174.66];
     freqs.forEach((freq, idx) => {
-      setTimeout(() => this.playTone(freq, 'sine', 0.15, 0.1), idx * 80);
+      setTimeout(() => this.playRetroPulse(freq, 0.12, 'square', 0.1), idx * 75);
     });
   }
 
   dogWarning() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(160, 'sawtooth', 0.35, 0.14);
-    setTimeout(() => this.playTone(130, 'sawtooth', 0.4, 0.14), 140);
+    this.playRetroPulse(140, 0.28, 'sawtooth', 0.14, 110);
   }
 
   dogBark() {
     if (!this.enabled) return;
     this.init();
-    this.playTone(220, 'sawtooth', 0.09, 0.2);
-    setTimeout(() => this.playTone(180, 'sawtooth', 0.14, 0.22), 80);
-    setTimeout(() => this.playTone(150, 'sawtooth', 0.18, 0.18), 190);
+    this.playRetroPulse(230, 0.08, 'sawtooth', 0.16, 140);
+    setTimeout(() => this.playRetroPulse(190, 0.1, 'sawtooth', 0.16, 110), 90);
+  }
+
+  cyberChime() {
+    if (!this.enabled) return;
+    this.init();
+    const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+    freqs.forEach((freq, idx) => {
+      setTimeout(() => this.playRetroPulse(freq, 0.1, 'square', 0.08), idx * 55);
+    });
+  }
+
+  // Triumphant Retro Route / Gym Victory Fanfare
+  fanfare() {
+    if (!this.enabled) return;
+    this.init();
+    this.duckBGM(3.5);
+    const melody = [
+      { f: 523.25, d: 0.12, t: 0 },   // C5
+      { f: 659.25, d: 0.12, t: 110 }, // E5
+      { f: 783.99, d: 0.12, t: 220 }, // G5
+      { f: 1046.50, d: 0.24, t: 330 },// C6
+      { f: 987.77, d: 0.12, t: 560 }, // B5
+      { f: 880.00, d: 0.12, t: 670 }, // A5
+      { f: 1046.50, d: 0.45, t: 780 } // C6
+    ];
+    melody.forEach(m => {
+      setTimeout(() => this.playRetroPulse(m.f, m.d, 'square', 0.16), m.t);
+    });
+  }
+
+  // ==========================================================================
+  // RETRO TOWN BACKGROUND MUSIC (Looping 8-Bit Chiptune Synth)
+  // ==========================================================================
+  startBGM() {
+    if (!this.enabled || !this.bgmEnabled || this.bgmIsPlaying) return;
+    this.init();
+    if (!this.ctx) return;
+
+    this.bgmIsPlaying = true;
+    this.bgmStep = 0;
+
+    // 16-step nostalgic town melody in C Major / Pentatonic (108 BPM)
+    const melodyPattern = [
+      523.25, 0, 659.25, 783.99,
+      880.00, 783.99, 659.25, 523.25,
+      587.33, 659.25, 587.33, 0,
+      523.25, 659.25, 783.99, 1046.50
+    ];
+
+    // Triangle walking bass notes
+    const bassPattern = [
+      130.81, 130.81, 196.00, 196.00,
+      220.00, 220.00, 174.61, 174.61,
+      146.83, 146.83, 196.00, 196.00,
+      130.81, 196.00, 130.81, 261.63
+    ];
+
+    const stepDurationMs = 265; // ~113 BPM
+
+    this.bgmTimer = setInterval(() => {
+      if (!this.bgmIsPlaying || !this.enabled || !this.bgmEnabled) return;
+      if (!this.ctx) return;
+
+      const idx = this.bgmStep % 16;
+      const mFreq = melodyPattern[idx];
+      const bFreq = bassPattern[idx];
+
+      const now = this.ctx.currentTime;
+
+      // Play soft triangle bass
+      if (bFreq > 0) {
+        try {
+          const oscB = this.ctx.createOscillator();
+          const gainB = this.ctx.createGain();
+          oscB.type = 'triangle';
+          oscB.frequency.setValueAtTime(bFreq, now);
+
+          gainB.gain.setValueAtTime(0.001, now);
+          gainB.gain.linearRampToValueAtTime(0.035, now + 0.01);
+          gainB.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+          oscB.connect(gainB);
+          gainB.connect(this.bgmGain || this.masterGain || this.ctx.destination);
+          oscB.start(now);
+          oscB.stop(now + 0.24);
+        } catch (e) {}
+      }
+
+      // Play pulse melody note
+      if (mFreq > 0) {
+        try {
+          const oscM = this.ctx.createOscillator();
+          const gainM = this.ctx.createGain();
+          const filterM = this.ctx.createBiquadFilter();
+
+          filterM.type = 'lowpass';
+          filterM.frequency.setValueAtTime(3200, now);
+
+          oscM.type = 'square';
+          oscM.frequency.setValueAtTime(mFreq, now);
+
+          gainM.gain.setValueAtTime(0.001, now);
+          gainM.gain.linearRampToValueAtTime(0.028, now + 0.01);
+          gainM.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+          oscM.connect(filterM);
+          filterM.connect(gainM);
+          gainM.connect(this.bgmGain || this.masterGain || this.ctx.destination);
+          oscM.start(now);
+          oscM.stop(now + 0.22);
+        } catch (e) {}
+      }
+
+      this.bgmStep++;
+    }, stepDurationMs);
+  }
+
+  stopBGM() {
+    this.bgmIsPlaying = false;
+    if (this.bgmTimer) {
+      clearInterval(this.bgmTimer);
+      this.bgmTimer = null;
+    }
+  }
+
+  toggleBGM() {
+    this.bgmEnabled = !this.bgmEnabled;
+    if (this.bgmEnabled) {
+      this.startBGM();
+    } else {
+      this.stopBGM();
+    }
+    return this.bgmEnabled;
+  }
+
+  duckBGM(durationSec = 2.5) {
+    if (!this.ctx || !this.bgmGain) return;
+    try {
+      const now = this.ctx.currentTime;
+      this.bgmGain.gain.setValueAtTime(0.005, now);
+      this.bgmGain.gain.exponentialRampToValueAtTime(0.045, now + durationSec);
+    } catch (e) {}
   }
 }
 
@@ -1185,7 +1396,7 @@ class PedestrianGame {
       if (this.progressAvatarImg) {
         this.progressAvatarImg.src = 'assets/characters/boy/face.png';
       }
-      sfx.playTone(400, 'sine', 0.1);
+      sfx.menuSelect();
     });
 
     girlBtn.addEventListener('click', () => {
@@ -1195,7 +1406,7 @@ class PedestrianGame {
       if (this.progressAvatarImg) {
         this.progressAvatarImg.src = 'assets/characters/girl/face.png';
       }
-      sfx.playTone(450, 'sine', 0.1);
+      sfx.menuSelect();
     });
 
     // Stay & Walk Picture Buttons
@@ -1217,42 +1428,42 @@ class PedestrianGame {
     // Start Button
     document.getElementById('start-game-btn').addEventListener('click', () => {
       sfx.init();
-      sfx.playTone(523, 'triangle', 0.2);
+      sfx.startAdventure();
       this.startGame();
     });
 
     // Level Mode Selection (Level 1: Bakery Walk vs Level 2: Grocery Store Adventure)
     if (this.selectLevel1) {
       this.selectLevel1.addEventListener('click', () => {
-        sfx.playTone(420, 'sine', 0.1);
+        sfx.menuSelect();
         this.setLevel(1);
       });
     }
 
     if (this.selectLevel2) {
       this.selectLevel2.addEventListener('click', () => {
-        sfx.playTone(560, 'sine', 0.1);
+        sfx.menuSelect();
         this.setLevel(2);
       });
     }
 
     if (this.selectLevel3) {
       this.selectLevel3.addEventListener('click', () => {
-        sfx.playTone(660, 'sine', 0.1);
+        sfx.menuSelect();
         this.setLevel(3);
       });
     }
 
     // Play Again Button (Victory Modal - Level 1)
     document.getElementById('play-again-btn').addEventListener('click', () => {
-      sfx.playTone(523, 'triangle', 0.2);
+      sfx.menuSelect();
       this.resetToStartMenu();
     });
 
     // Store Checkout Modal Buttons (Level 2)
     if (this.storePlayAgainBtn) {
       this.storePlayAgainBtn.addEventListener('click', () => {
-        sfx.playTone(523, 'triangle', 0.2);
+        sfx.startAdventure();
         if (this.checkoutModal) this.checkoutModal.classList.add('hidden');
         this.setLevel(2);
         this.startGame();
@@ -1309,7 +1520,7 @@ class PedestrianGame {
     const homePlayAgain = document.getElementById('home-play-again-btn');
     if (homePlayAgain) {
       homePlayAgain.addEventListener('click', () => {
-        sfx.playTone(523, 'triangle', 0.2);
+        sfx.startAdventure();
         this.startLevel2StoreGame();
       });
     }
@@ -1327,7 +1538,7 @@ class PedestrianGame {
     const shoppingPlayAgain = document.getElementById('shopping-play-again-btn');
     if (shoppingPlayAgain) {
       shoppingPlayAgain.addEventListener('click', () => {
-        sfx.playTone(523, 'triangle', 0.2);
+        sfx.startAdventure();
         this.startShoppingOnlyGame();
       });
     }
@@ -1351,13 +1562,33 @@ class PedestrianGame {
       });
     }
 
-    // Sound Toggle
+    // Sound Effects Toggle (HUD)
     const soundBtn = document.getElementById('sound-toggle-btn');
     if (soundBtn) {
       soundBtn.addEventListener('click', () => {
         sfx.enabled = !sfx.enabled;
         soundBtn.textContent = sfx.enabled ? '🔊' : '🔇';
-        if (sfx.enabled) sfx.playTone(600, 'sine', 0.15);
+        if (sfx.enabled) sfx.menuSelect();
+      });
+    }
+
+    // Music Toggles (HUD and Start Menu)
+    const musicBtn = document.getElementById('music-toggle-btn');
+    const menuMusicBtn = document.getElementById('menu-music-btn');
+    const updateMusicUI = (on) => {
+      if (musicBtn) musicBtn.textContent = on ? '🎵' : '🔇';
+      if (menuMusicBtn) menuMusicBtn.textContent = on ? '🎵 Retro BGM: ON' : '🔇 Retro BGM: OFF';
+    };
+    if (musicBtn) {
+      musicBtn.addEventListener('click', () => {
+        const on = sfx.toggleBGM();
+        updateMusicUI(on);
+      });
+    }
+    if (menuMusicBtn) {
+      menuMusicBtn.addEventListener('click', () => {
+        const on = sfx.toggleBGM();
+        updateMusicUI(on);
       });
     }
 
@@ -1371,19 +1602,23 @@ class PedestrianGame {
         this.keys.left = false;
         this.keys.right = false;
         this.resetButtonStyles();
-        sfx.tick();
+        sfx.menuCursor();
       }
     };
 
     const closeInfoModal = () => {
       if (this.infoModal) {
         this.infoModal.classList.add('hidden');
-        sfx.tick();
+        sfx.menuCursor();
       }
     };
 
     if (this.infoBtn) {
       this.infoBtn.addEventListener('click', openInfoModal);
+    }
+    const menuGuideBtn = document.getElementById('menu-guide-btn');
+    if (menuGuideBtn) {
+      menuGuideBtn.addEventListener('click', openInfoModal);
     }
     if (this.btnCloseInfo) {
       this.btnCloseInfo.addEventListener('click', closeInfoModal);
@@ -4399,22 +4634,31 @@ class PedestrianGame {
     ctx.save();
     ctx.font = 'bold 11px Fredoka, sans-serif';
     const textW = ctx.measureText(text).width;
-    const bW = textW + 18;
-    const bH = 24;
+    const bW = textW + 20;
+    const bH = 26;
 
-    // Drop shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+    // Retro Hard Pixel Drop Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.roundRect(x - bW / 2 + 2, y - bH / 2 + 2, bW, bH, 12);
+    ctx.roundRect(x - bW / 2 + 2, y - bH / 2 + 2, bW, bH, 4);
     ctx.fill();
 
-    // Background pill
+    // Background Card
     ctx.fillStyle = bgColor;
     ctx.beginPath();
-    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 12);
+    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 4);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+
+    // Retro Inner Highlight Frame
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Retro Dark Outer Outline
+    ctx.strokeStyle = '#20242e';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 4);
     ctx.stroke();
 
     // Pointer notch
@@ -4425,8 +4669,11 @@ class PedestrianGame {
     ctx.lineTo(x, y + bH / 2 + 5);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#20242e';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-    // Text
+    // Text with subtle shadow
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -4438,22 +4685,34 @@ class PedestrianGame {
     ctx.save();
     ctx.font = 'bold 10px Fredoka, sans-serif';
     const textW = ctx.measureText(text).width;
-    const bW = textW + 16;
+    const bW = textW + 18;
     const bH = 22;
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    // Hard Pixel Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.roundRect(x - bW / 2 + 2, y - bH / 2 + 2, bW, bH, 11);
+    ctx.roundRect(x - bW / 2 + 2, y - bH / 2 + 2, bW, bH, 4);
     ctx.fill();
 
+    // Fill
     ctx.fillStyle = bgColor;
     ctx.beginPath();
-    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 11);
+    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 4);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.8;
+
+    // Inner Highlight
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
+    // Dark Outer Border
+    ctx.strokeStyle = '#20242e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x - bW / 2, y - bH / 2, bW, bH, 4);
+    ctx.stroke();
+
+    // Text
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

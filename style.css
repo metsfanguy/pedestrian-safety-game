@@ -15,6 +15,19 @@
   --border-radius-md: 18px;
   --border-radius-sm: 12px;
   --font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Retro Handheld RPG Theme Variables */
+  --font-retro: 'Press Start 2P', monospace, sans-serif;
+  --font-body: 'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --retro-cream: #faf7eb;
+  --retro-parchment: #fdfbf3;
+  --retro-dark: #20242e;
+  --retro-border: #2a303c;
+  --retro-border-inner: #d8ceb0;
+  --retro-gold: #f59e0b;
+  --retro-green: #10b981;
+  --retro-blue: #3b82f6;
+  --retro-red: #ef4444;
 }
 
 * {
@@ -124,18 +137,18 @@ body, html {
 }
 
 .safety-chances-pill {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
+  background: var(--retro-dark);
   padding: 5px 12px;
-  border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-  border: 2px solid #ffffff;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  border: 2.5px solid var(--retro-gold);
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--font-retro);
   font-weight: 700;
-  font-size: 0.92rem;
-  color: #263238;
+  font-size: 0.56rem;
+  color: #ffffff;
 }
 
 .chances-icons {
@@ -149,6 +162,7 @@ body, html {
   line-height: 1;
   display: inline-block;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.25s ease, opacity 0.25s ease;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
 }
 
 .chance-heart.lost {
@@ -170,22 +184,22 @@ body, html {
 }
 
 .hud-item {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
+  background: var(--retro-parchment);
   padding: 6px 14px;
-  border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-  border: 2px solid #ffffff;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--retro-border);
+  border: 2.5px solid var(--retro-border);
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--font-retro);
   font-weight: 700;
-  font-size: 0.95rem;
-  color: #263238;
+  font-size: 0.6rem;
+  color: #1e293b;
 }
 
 .safety-stars .star-icon {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   animation: starPulse 2s infinite ease-in-out;
 }
 
@@ -195,9 +209,10 @@ body, html {
 }
 
 .hud-label {
-  font-size: 0.82rem;
-  color: #546e7a;
-  font-weight: 600;
+  font-size: 0.52rem;
+  color: #fde68a;
+  font-family: var(--font-retro);
+  letter-spacing: 0.3px;
 }
 
 .destination-pill {
@@ -206,29 +221,32 @@ body, html {
   color: #e65100;
 }
 
-.hud-btn {
+.hud-btn, .retro-hud-btn {
   pointer-events: auto;
-  background: white;
-  border: 2px solid #cfd8dc;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1.2rem;
+  background: #ffffff;
+  border: 2.5px solid var(--retro-border);
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  font-size: 1.15rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.15s, background-color 0.2s;
+  box-shadow: 2.5px 2.5px 0 var(--retro-border);
+  transition: transform 0.12s, background-color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.hud-btn:hover {
-  transform: scale(1.08);
-  background-color: #f1f8e9;
+.hud-btn:hover, .retro-hud-btn:hover {
+  transform: translateY(-2px);
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  box-shadow: 2.5px 4.5px 0 #1d4ed8;
 }
 
-.hud-btn:active {
-  transform: scale(0.95);
+.hud-btn:active, .retro-hud-btn:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 var(--retro-border);
 }
 
 /* ==========================================================================
@@ -609,148 +627,134 @@ body, html {
   pointer-events: none;
 }
 
-/* Card Styling */
-.menu-card, .challenge-card, .victory-card {
-  background: var(--card-bg);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--card-shadow);
+/* Card Styling - Authentic Vintage Handheld RPG Double-Border Frame */
+.menu-card, .challenge-card, .victory-card, .practice-card {
+  background: var(--retro-parchment);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0px rgba(18, 22, 30, 0.45);
   padding: 18px 16px;
   max-width: 500px;
   width: 100%;
   text-align: center;
-  border: 4px solid #ffffff;
+  border: 4px solid var(--retro-border);
+  outline: 3px solid var(--retro-border-inner);
   position: relative;
   overflow-y: auto;
   max-height: 96%;
 }
 
 /* Title & Branding */
-.title-badge {
-  display: inline-block;
-  background: #e8f5e9;
-  color: #2e7d32;
-  font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.5px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  margin-bottom: 8px;
-  border: 2px solid #a5d6a7;
+.retro-header-banner {
+  margin-bottom: 12px;
 }
 
-.game-title {
-  font-size: 2rem;
+.title-badge, .retro-title-badge {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-family: var(--font-retro);
+  font-weight: 700;
+  font-size: 0.54rem;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 2px solid #38bdf8;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+}
+
+.game-title, .retro-game-title {
+  font-family: var(--font-retro);
+  font-size: 1.3rem;
   font-weight: 700;
   color: #1e3a8a;
-  line-height: 1.1;
-  margin-bottom: 6px;
+  line-height: 1.25;
+  margin-bottom: 4px;
+  text-shadow: 2px 2px 0px #93c5fd;
 }
 
 .game-title .subtitle {
-  color: #ff9800;
-  font-size: 2.2rem;
-  text-shadow: 2px 2px 0px #ffe082;
+  font-family: var(--font-body);
+  color: #f59e0b;
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 0px #fde68a;
+  display: block;
 }
 
-.menu-desc {
-  font-size: 0.92rem;
-  color: #546e7a;
-  margin-bottom: 14px;
-}
-
-/* Character Selection */
-.character-select-section h3, .theme-select-section h3 {
-  font-size: 1.15rem;
-  color: #37474f;
+.menu-desc, .retro-menu-desc {
+  font-size: 0.88rem;
+  color: #475569;
   margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+/* Section Labels */
+.retro-section-label {
+  font-family: var(--font-retro);
+  font-size: 0.62rem;
+  color: #1e293b;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.retro-section-label span {
+  color: #f59e0b;
+  margin-right: 2px;
+}
+
+/* Character Selection (Trainer Select Style) */
+.character-select-section h3, .theme-select-section h3 {
+  font-size: 1.05rem;
+  color: #37474f;
+  margin-bottom: 10px;
 }
 
 .character-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-/* Theme Selection */
-.theme-select-section {
-  margin-bottom: 18px;
-}
-
-.theme-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.theme-btn {
-  background: #f5f5f5;
-  border: 3px solid #cfd8dc;
-  border-radius: var(--border-radius-sm);
-  padding: 10px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #37474f;
-}
-
-.theme-btn:hover {
-  transform: translateY(-2px);
-  background: #e1f5fe;
-  border-color: #81d4fa;
-}
-
-.theme-btn.selected {
-  background: #e8f5e9;
-  border-color: #4caf50;
-  color: #1b5e20;
-  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.35);
-  transform: scale(1.02);
-}
-
-.theme-icon {
-  font-size: 1.4rem;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .char-card {
-  background: #f5f5f5;
-  border: 3px solid #cfd8dc;
-  border-radius: var(--border-radius-md);
+  background: #ffffff;
+  border: 3px solid var(--retro-border);
+  box-shadow: 3px 3px 0 var(--retro-border);
+  border-radius: 12px;
   padding: 8px 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   font-family: inherit;
 }
 
 .char-card:hover {
   transform: translateY(-2px);
-  background: #e3f2fd;
-  border-color: #90caf9;
+  background: #eff6ff;
+  border-color: #3b82f6;
+  box-shadow: 3px 5px 0 #1d4ed8;
 }
 
 .char-card.selected {
-  background: #e8f5e9;
-  border-color: #4caf50;
-  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.35);
+  background: #f0fdf4;
+  border-color: #059669;
+  box-shadow: 3px 3px 0 #064e3b, inset 0 0 0 2px #6ee7b7;
   transform: scale(1.02);
 }
 
 .char-avatar-preview {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: 12px;
   background: #ffffff;
   padding: 2px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  border: 2px solid var(--retro-border);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -761,33 +765,58 @@ body, html {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 8px;
+}
+
+.char-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.char-cursor {
+  font-family: var(--font-retro);
+  font-size: 0.72rem;
+  color: #059669;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.char-card.selected .char-cursor {
+  opacity: 1;
+  animation: retroCursorBob 0.6s infinite alternate;
 }
 
 .char-name {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #263238;
+  color: #1e293b;
+}
+
+@keyframes retroCursorBob {
+  from { transform: translateX(0); }
+  to { transform: translateX(3px); }
 }
 
 /* Destination Preview */
 .destination-select-section {
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
-.destination-card {
-  background: #fff8e1;
-  border: 3px dashed #ffca28;
-  border-radius: var(--border-radius-md);
-  padding: 12px 16px;
+.destination-card, .retro-dest-card {
+  background: #fffdf5;
+  border: 3px solid var(--retro-border);
+  box-shadow: 3px 3px 0 var(--retro-border), inset 0 0 0 2px #fef3c7;
+  border-radius: 12px;
+  padding: 10px 14px;
   text-align: left;
 }
 
 .dest-badge {
-  font-size: 0.75rem;
+  font-family: var(--font-retro);
+  font-size: 0.52rem;
   font-weight: 700;
-  color: #f57f17;
-  text-transform: uppercase;
+  color: #b45309;
   letter-spacing: 0.5px;
 }
 
@@ -799,46 +828,78 @@ body, html {
 }
 
 .dest-icon {
-  font-size: 2.2rem;
+  font-size: 2rem;
 }
 
 .dest-info strong {
-  font-size: 1.15rem;
-  color: #e65100;
+  font-size: 1.08rem;
+  color: #92400e;
 }
 
 .dest-info p {
-  font-size: 0.88rem;
-  color: #795548;
+  font-size: 0.85rem;
+  color: #57534e;
 }
 
-/* Big Action Button */
+/* Big Action Button (Retro Arcade Style) */
 .big-action-btn {
   width: 100%;
-  padding: 16px 24px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
-  color: white;
-  font-family: inherit;
-  font-size: 1.35rem;
-  font-weight: 700;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: 3.5px solid #064e3b;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(46, 125, 50, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: var(--font-retro);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 6px 0 #064e3b, 0 10px 18px rgba(0, 0, 0, 0.35);
+  text-shadow: 1px 1px 0 #064e3b;
+  transition: all 0.12s ease;
+  letter-spacing: 0.5px;
 }
 
 .big-action-btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(46, 125, 50, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #064e3b, 0 12px 22px rgba(0, 0, 0, 0.4);
 }
 
 .big-action-btn:active {
-  transform: translateY(1px) scale(0.98);
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #064e3b, 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Menu Help Toolbar for Parents & Kids */
+.menu-help-toolbar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.menu-toolbar-btn {
+  background: #f1f5f9;
+  border: 2px solid var(--retro-border);
+  box-shadow: 2px 2px 0 var(--retro-border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.menu-toolbar-btn:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 0 var(--retro-border);
+}
+
+.menu-toolbar-btn:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 var(--retro-border);
 }
 
 .pulse-glow {
@@ -1750,9 +1811,10 @@ body, html {
 
 .level-card {
   position: relative;
-  background: #f8fafc;
-  border: 2.5px solid #cbd5e1;
-  border-radius: 14px;
+  background: #ffffff;
+  border: 3px solid var(--retro-border);
+  box-shadow: 3px 3px 0 var(--retro-border);
+  border-radius: 12px;
   padding: 10px 5px;
   cursor: pointer;
   display: flex;
@@ -1760,20 +1822,21 @@ body, html {
   align-items: center;
   text-align: center;
   gap: 4px;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   font-family: inherit;
 }
 
 .level-card:hover {
   transform: translateY(-2px);
   background: #eff6ff;
-  border-color: #60a5fa;
+  border-color: #3b82f6;
+  box-shadow: 3px 5px 0 #1d4ed8;
 }
 
 .level-card.selected {
   background: #f0fdf4;
-  border-color: #22c55e;
-  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+  border-color: #059669;
+  box-shadow: 3px 3px 0 #064e3b, inset 0 0 0 2px #6ee7b7;
   transform: scale(1.02);
 }
 
@@ -1781,13 +1844,15 @@ body, html {
   position: absolute;
   top: 5px;
   left: 5px;
-  font-size: 0.55rem;
-  font-weight: 800;
+  font-family: var(--font-retro);
+  font-size: 0.44rem;
+  font-weight: 700;
   padding: 2px 4px;
-  border-radius: 5px;
+  border-radius: 4px;
   background: #3b82f6;
   color: #ffffff;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
+  border: 1.5px solid rgba(0, 0, 0, 0.25);
 }
 
 .level-badge-tag.level-2-tag {
@@ -1800,7 +1865,7 @@ body, html {
 
 .level-icon-box {
   font-size: 1.6rem;
-  margin-top: 6px;
+  margin-top: 8px;
   line-height: 1;
 }
 

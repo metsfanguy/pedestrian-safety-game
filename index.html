@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="game-console-wrapper">
@@ -30,10 +30,13 @@
             </div>
           </div>
           <div class="hud-right-group">
-            <button id="info-btn" class="hud-btn" title="How to Play & Safety Guide">
+            <button id="info-btn" class="hud-btn retro-hud-btn" title="How to Play & Safety Guide">
               ℹ️
             </button>
-            <button id="sound-toggle-btn" class="hud-btn" title="Toggle Sound">
+            <button id="music-toggle-btn" class="hud-btn retro-hud-btn" title="Toggle Retro BGM Music">
+              🎵
+            </button>
+            <button id="sound-toggle-btn" class="hud-btn retro-hud-btn" title="Toggle Sound Effects">
               🔊
             </button>
           </div>
@@ -90,16 +93,18 @@
       </div>
     </div>
 
-    <!-- Start Menu Screen Overlay -->
+    <!-- Start Menu Screen Overlay (Retro Handheld RPG Style) -->
     <div id="start-menu" class="screen-overlay">
-      <div class="menu-card animate-pop">
-        <div class="title-badge">🚦 PEDESTRIAN SAFETY ADVENTURE</div>
-        <h1 class="game-title">Safe Steps<br><span class="subtitle">City Walk!</span></h1>
-        <p class="menu-desc">Help your character walk safely through the city to reach their fun destination!</p>
+      <div class="menu-card animate-pop retro-menu-frame">
+        <div class="retro-header-banner">
+          <div class="title-badge retro-title-badge">★ RETRO PEDESTRIAN HERO QUEST ★</div>
+          <h1 class="game-title retro-game-title">Safe Steps<br><span class="subtitle">City Walk!</span></h1>
+          <p class="menu-desc retro-menu-desc">Help your hero walk safely through town to reach their destination!</p>
+        </div>
 
         <!-- Level Mode Selection -->
         <div class="level-select-section">
-          <h3>Choose Adventure Mode:</h3>
+          <h3 class="retro-section-label"><span>1.</span> CHOOSE YOUR QUEST:</h3>
           <div class="level-options">
             <button class="level-card selected" data-level="1" id="select-level-1">
               <div class="level-badge-tag">LEVEL 1</div>
@@ -132,28 +137,34 @@
 
         <!-- Character Selection -->
         <div class="character-select-section">
-          <h3>Choose Your Explorer:</h3>
+          <h3 class="retro-section-label"><span>2.</span> CHOOSE YOUR HERO:</h3>
           <div class="character-options">
             <button class="char-card selected" data-char="boy" id="select-boy">
               <div class="char-avatar-preview boy-avatar">
                 <img src="assets/characters/boy/face.png" alt="Leo (Boy)" class="char-img-preview">
               </div>
-              <span class="char-name">Leo (Boy)</span>
+              <div class="char-meta">
+                <span class="char-cursor">▶</span>
+                <span class="char-name">Hero Leo</span>
+              </div>
             </button>
 
             <button class="char-card" data-char="girl" id="select-girl">
               <div class="char-avatar-preview girl-avatar">
                 <img src="assets/characters/girl/face.png" alt="Maya (Girl)" class="char-img-preview">
               </div>
-              <span class="char-name">Maya (Girl)</span>
+              <div class="char-meta">
+                <span class="char-cursor">▶</span>
+                <span class="char-name">Hero Maya</span>
+              </div>
             </button>
           </div>
         </div>
 
         <!-- Destination Selection Preview -->
         <div class="destination-select-section">
-          <div class="destination-card">
-            <span class="dest-badge">Today's Destination</span>
+          <div class="destination-card retro-dest-card">
+            <span class="dest-badge">CURRENT MISSION</span>
             <div class="dest-info">
               <span id="menu-dest-icon" class="dest-icon">🧁</span>
               <div>
@@ -164,9 +175,19 @@
           </div>
         </div>
 
-        <button id="start-game-btn" class="big-action-btn pulse-glow">
-          <span>START WALKING!</span> 🚶💨
+        <button id="start-game-btn" class="big-action-btn pulse-glow retro-start-btn">
+          <span>▶ PRESS START / BEGIN QUEST</span>
         </button>
+
+        <!-- Quick Access Toolbar for Parents & Kids -->
+        <div class="menu-help-toolbar">
+          <button id="menu-guide-btn" class="menu-toolbar-btn" title="Open Pedestrian Safety Handbook">
+            📖 Parent & Kid Guide
+          </button>
+          <button id="menu-music-btn" class="menu-toolbar-btn" title="Toggle Retro Music">
+            🎵 Retro BGM: ON
+          </button>
+        </div>
       </div>
     </div>
 
