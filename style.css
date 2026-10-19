@@ -2065,6 +2065,11 @@ body, html {
 /* ==========================================================================
    Checkout Mini-Game Modal
    ========================================================================== */
+#checkout-minigame-modal {
+  padding: 8px;
+  overflow: hidden;
+}
+
 .hidden,
 .checkout-stage.hidden {
   display: none !important;
@@ -2072,18 +2077,18 @@ body, html {
 
 .terminal-card {
   background: #ffffff;
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7);
-  padding: 12px 14px;
-  max-width: 480px;
-  width: 95%;
-  max-height: 94%;
+  padding: 8px 10px;
+  max-width: 580px;
+  width: 96%;
+  max-height: 96%;
   display: flex;
   flex-direction: column;
   text-align: center;
-  border: 3.5px solid #0f172a;
+  border: 3px solid #0f172a;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden; /* Fits cleanly in square without scrolling */
   font-family: 'Fredoka', sans-serif;
   box-sizing: border-box;
 }
@@ -2092,28 +2097,28 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #e2e8f0;
   flex-shrink: 0;
 }
 
 .terminal-brand-pill {
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   font-weight: 800;
   color: #15803d;
   background: #f0fdf4;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid #bbf7d0;
 }
 
 .terminal-step-badge {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #1e3a8a;
   background: #eff6ff;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid #bfdbfe;
 }
@@ -2121,7 +2126,8 @@ body, html {
 .checkout-stage {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
+  overflow: hidden;
 }
 
 .stage-instruction {
@@ -2260,26 +2266,27 @@ body, html {
 .cashier-buddy-card {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.2);
+  border: 1.5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 4px 8px;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.15);
+  flex-shrink: 0;
 }
 
 .cashier-buddy-avatar {
-  font-size: 2rem;
+  font-size: 1.45rem;
   line-height: 1;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
   flex-shrink: 0;
   animation: bounceAvatar 2.2s ease-in-out infinite;
 }
 
 @keyframes bounceAvatar {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px) scale(1.06); }
+  50% { transform: translateY(-2px) scale(1.05); }
 }
 
 .cashier-buddy-content {
@@ -2291,47 +2298,50 @@ body, html {
 .cashier-buddy-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
+  gap: 5px;
+  margin-bottom: 1px;
 }
 
 .cashier-buddy-name {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #78350f;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .cashier-buddy-badge {
   background: #f59e0b;
   color: #ffffff;
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 999px;
   text-transform: uppercase;
 }
 
 .cashier-speech-msg {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #92400e;
-  line-height: 1.3;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cashier-hint-btn {
   background: #ffffff;
-  border: 2px solid #f59e0b;
+  border: 1.5px solid #f59e0b;
   color: #b45309;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 6px 11px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   transition: all 0.15s ease;
   flex-shrink: 0;
   font-family: inherit;
@@ -2339,50 +2349,117 @@ body, html {
 
 .cashier-hint-btn:hover {
   background: #fffbeb;
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 3px 6px rgba(245, 158, 11, 0.2);
 }
 
 .cashier-hint-btn:active {
   transform: scale(0.96);
 }
 
-/* Payment Goal Progress Bar */
-.payment-progress-box {
-  margin: 6px 0 3px 0;
+/* 2-Column Workstation Layout: Register Left, Cash Drawer Right */
+.checkout-pay-columns {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.pay-col-register,
+.pay-col-currency {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* Stage 2: Register Digital Display */
+.register-display-screen {
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 10px;
+  padding: 5px 8px;
+  color: #f8fafc;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.register-screen-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.screen-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.screen-val.due-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #4ade80;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.screen-val.paid-val {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #38bdf8;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.screen-val.balance-val {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fbbf24;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.screen-val.balance-val.change-green {
+  color: #4ade80;
+}
+
+/* Visual Payment Goal Progress Bar */
+.payment-progress-box {
+  margin: 2px 0 1px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .payment-progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 800;
   color: #cbd5e1;
 }
 
 .progress-title {
   color: #94a3b8;
-  font-size: 0.72rem;
+  font-size: 0.6rem;
 }
 
 .progress-pct {
   color: #38bdf8;
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.65rem;
+  font-size: 0.55rem;
 }
 
 .payment-progress-track {
   width: 100%;
-  height: 12px;
+  height: 9px;
   background: #0f172a;
   border-radius: 999px;
-  border: 1.5px solid #334155;
+  border: 1px solid #334155;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
   position: relative;
 }
 
@@ -2392,7 +2469,7 @@ body, html {
   background: linear-gradient(90deg, #38bdf8 0%, #22c55e 100%);
   border-radius: 999px;
   transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }
 
 .payment-progress-fill.goal-reached {
@@ -2405,146 +2482,38 @@ body, html {
   to { filter: brightness(1.25) drop-shadow(0 0 8px #eab308); }
 }
 
-/* Hint Highlighting for recommended coin or bill */
-@keyframes hintWiggle {
-  0% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
-  25% { transform: scale(1.12) rotate(-3deg); box-shadow: 0 0 0 5px #facc15, 0 10px 20px rgba(234, 179, 8, 0.6); }
-  50% { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
-  75% { transform: scale(1.12) rotate(-2deg); box-shadow: 0 0 0 5px #facc15, 0 10px 20px rgba(234, 179, 8, 0.6); }
-  100% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
+.register-status-msg {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-top: 2px;
+  border-top: 1px dashed #334155;
+  padding-top: 2px;
+  min-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hint-highlight {
-  animation: hintWiggle 0.6s infinite ease-in-out !important;
-  z-index: 10;
-  border-radius: 10px;
-}
-
-/* Floating Cash Particle Badge */
-.floating-cash-particle {
-  position: absolute;
-  pointer-events: none;
-  font-weight: 800;
-  font-size: 0.95rem;
-  border-radius: 999px;
-  padding: 3px 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  animation: floatUpFade 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  z-index: 999;
-}
-
-.floating-cash-particle.bill {
-  background: #15803d;
-  color: #ffffff;
-  border: 2px solid #86efac;
-}
-
-.floating-cash-particle.coin {
-  background: #d97706;
-  color: #ffffff;
-  border: 2px solid #fde047;
-}
-
-@keyframes floatUpFade {
-  0% {
-    opacity: 0;
-    transform: translateY(12px) scale(0.7);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0px) scale(1.14);
-  }
-  70% {
-    opacity: 1;
-    transform: translateY(-24px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-44px) scale(0.85);
-  }
-}
-
-/* Stage 2: Payment Screen */
-.register-display-screen {
-  background: #0f172a;
-  border: 3px solid #334155;
-  border-radius: 12px;
-  padding: 10px 14px;
-  color: #f8fafc;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
+/* Interactive Cash Register Drop Zone / Tray */
+.register-drop-zone-wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-bottom: 8px;
-}
-
-.register-screen-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.screen-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #94a3b8;
-}
-
-.screen-val.due-val {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #4ade80;
-  font-family: 'Press Start 2P', monospace;
-}
-
-.screen-val.paid-val {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #38bdf8;
-  font-family: 'Press Start 2P', monospace;
-}
-
-.screen-val.balance-val {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #fbbf24;
-  font-family: 'Press Start 2P', monospace;
-}
-
-.screen-val.balance-val.change-green {
-  color: #4ade80;
-}
-
-.register-status-msg {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #fbbf24;
-  margin-top: 4px;
-  border-top: 1px dashed #334155;
-  padding-top: 4px;
-  min-height: 20px;
-}
-
-/* Interactive Cash Register Drop Zone Tray */
-.register-drop-zone-wrapper {
-  margin-bottom: 8px;
-  position: relative;
+  gap: 2px;
 }
 
 .cash-drop-zone {
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  border: 2.5px dashed #475569;
-  border-radius: 12px;
-  padding: 8px 10px;
-  min-height: 64px;
+  border: 2px dashed #475569;
+  border-radius: 9px;
+  padding: 4px 6px;
+  min-height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 3px;
   transition: all 0.18s ease;
   cursor: pointer;
 }
@@ -2553,88 +2522,62 @@ body, html {
 .cash-drop-zone.drop-active {
   border-color: #22c55e;
   background: linear-gradient(180deg, #064e3b 0%, #022c22 100%);
-  box-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.45);
   transform: scale(1.02);
 }
 
 .drop-zone-slot {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .slot-opening {
   display: inline-block;
-  width: 24px;
-  height: 4px;
+  width: 16px;
+  height: 3px;
   background: #334155;
   border-radius: 2px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .slot-label {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   font-weight: 800;
   color: #94a3b8;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .cash-tray-contents {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 3px;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 28px;
-  max-height: 60px;
+  min-height: 22px;
+  max-height: 44px;
   overflow-y: auto;
 }
 
 .tray-placeholder {
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   color: #64748b;
   font-style: italic;
-}
-
-.tray-token {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-weight: 800;
-  font-size: 0.72rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-  user-select: none;
-}
-
-.tray-token.token-bill {
-  background: #dcfce7;
-  border: 1.5px solid #16a34a;
-  color: #15803d;
-}
-
-.tray-token.token-coin {
-  background: #fef3c7;
-  border: 1.5px solid #d97706;
-  color: #92400e;
-  border-radius: 50px;
-  padding: 2px 6px;
 }
 
 .cash-tray-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 3px;
+  margin-top: 1px;
 }
 
 .clear-cash-btn {
   background: #f1f5f9;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 3px 8px;
-  font-size: 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 0.62rem;
   font-weight: 700;
   color: #475569;
   cursor: pointer;
@@ -2648,62 +2591,34 @@ body, html {
   transform: translateY(-1px);
 }
 
-/* Cash & Coins Wallet Drawer */
+/* Currency Drawer: Paper Bills & Coins */
 .currency-drawer {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.currency-group-title {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: #475569;
-  text-align: left;
-  margin: 3px 0 2px 2px;
-  letter-spacing: 0.4px;
-}
-
-.currency-row {
-  display: grid;
-  gap: 8px;
-}
-
-.bills-row {
-  grid-template-columns: 1fr 1fr;
-}
-
-.coins-row {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-/* Real Cash & Coins Wallet Drawer */
-.currency-drawer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   background: #f8fafc;
-  padding: 8px 10px;
-  border-radius: 12px;
+  padding: 5px 6px;
+  border-radius: 10px;
   border: 1.5px solid #e2e8f0;
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
 }
 
 .currency-group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .currency-group-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.55rem;
+  font-size: 0.48rem;
   font-weight: 700;
   color: #475569;
   text-align: left;
-  margin: 2px 0 3px 2px;
-  letter-spacing: 0.4px;
+  margin: 1px 0 2px 1px;
+  letter-spacing: 0.2px;
 }
 
 .currency-row {
@@ -2713,12 +2628,12 @@ body, html {
 
 .bills-row {
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 6px;
 }
 
 .coins-row {
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 3px;
 }
 
 .money-item {
@@ -2729,14 +2644,14 @@ body, html {
   user-select: none;
   touch-action: manipulation;
   transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
-  padding: 2px;
-  border-radius: 8px;
+  padding: 1px;
+  border-radius: 6px;
   outline: none;
 }
 
 .money-item:hover,
 .money-item:focus-visible {
-  transform: translateY(-4px) scale(1.04);
+  transform: translateY(-2px) scale(1.04);
 }
 
 .money-item:active {
@@ -2756,8 +2671,8 @@ body, html {
 
 .bill-shadow-wrap {
   width: 100%;
-  border-radius: 4px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   transition: box-shadow 0.15s ease;
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -2765,7 +2680,7 @@ body, html {
 }
 
 .bill-item:hover .bill-shadow-wrap {
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 .bill-img {
@@ -2774,20 +2689,20 @@ body, html {
   aspect-ratio: 2.3 / 1;
   display: block;
   object-fit: fill;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
-/* Authentic American Coins */
+/* Proportional American Coins */
 .coin-disc-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   transition: filter 0.15s ease;
 }
 
 .coin-item:hover .coin-disc-wrap {
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.48));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
 }
 
 .coin-img {
@@ -2797,37 +2712,99 @@ body, html {
   transition: transform 0.15s ease;
 }
 
-/* Proportional Coin Diameters */
 .coin-img-quarter {
-  width: 58px;
-  height: 58px;
+  width: 40px;
+  height: 40px;
 }
 
 .coin-img-nickel {
-  width: 52px;
-  height: 52px;
+  width: 36px;
+  height: 36px;
 }
 
 .coin-img-dime {
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
 }
 
 .coin-img-penny {
-  width: 48px;
-  height: 48px;
+  width: 33px;
+  height: 33px;
 }
 
 .currency-tag {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 800;
   color: #1e293b;
-  margin-top: 3px;
+  margin-top: 2px;
   background: #ffffff;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   border: 1px solid #cbd5e1;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+}
+
+/* Hint Highlighting for recommended coin or bill */
+@keyframes hintWiggle {
+  0% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 3px #eab308, 0 6px 12px rgba(234, 179, 8, 0.5); }
+  25% { transform: scale(1.12) rotate(-3deg); box-shadow: 0 0 0 4px #facc15, 0 8px 14px rgba(234, 179, 8, 0.6); }
+  50% { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 3px #eab308, 0 6px 12px rgba(234, 179, 8, 0.5); }
+  75% { transform: scale(1.12) rotate(-2deg); box-shadow: 0 0 0 4px #facc15, 0 8px 14px rgba(234, 179, 8, 0.6); }
+  100% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 3px #eab308, 0 6px 12px rgba(234, 179, 8, 0.5); }
+}
+
+.hint-highlight {
+  animation: hintWiggle 0.6s infinite ease-in-out !important;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+/* Floating Cash Particle Badge */
+.floating-cash-particle {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 0.88rem;
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  animation: floatUpFade 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 999;
+}
+
+.floating-cash-particle.bill {
+  background: #15803d;
+  color: #ffffff;
+  border: 1.5px solid #86efac;
+}
+
+.floating-cash-particle.coin {
+  background: #d97706;
+  color: #ffffff;
+  border: 1.5px solid #fde047;
+}
+
+@keyframes floatUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0px) scale(1.1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(0.85);
+  }
 }
 
 /* Cash Tray Mini Tokens */
