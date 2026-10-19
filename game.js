@@ -1515,6 +1515,12 @@ class PedestrianGame {
       clearCashBtn.addEventListener('click', () => this.resetCheckoutCash());
     }
 
+    // Cashier Sam Hint Button
+    const hintBtn = document.getElementById('btn-cashier-hint');
+    if (hintBtn) {
+      hintBtn.addEventListener('click', () => this.handleCashierHint());
+    }
+
     // Drag and Drop support onto Cash Register Tray
     const dropZone = document.getElementById('cash-drop-zone');
     const currencyButtons = document.querySelectorAll('.currency-drawer .money-item, .currency-drawer .money-btn');
@@ -4910,8 +4916,10 @@ class PedestrianGame {
     ctx.save();
     ctx.translate(this.player.x, this.player.y);
 
-    const charW = 58;
-    const charH = 58;
+    const isStore = this.state === 'STORE_SHOPPING';
+    const scaleFactor = isStore ? 1.8 : 1.0;
+    const charW = 58 * scaleFactor;
+    const charH = 58 * scaleFactor;
 
     // 1. IF CHARACTER IS FALLING DOWN (Stumble & Recovery Sequence):
     if (this.player.isFalling) {
@@ -5089,10 +5097,10 @@ class PedestrianGame {
       }
     }
 
-    // Player Soft Drop Shadow on Sidewalk / Crosswalk
+    // Player Soft Drop Shadow on Sidewalk / Crosswalk / Store Floor
     ctx.fillStyle = 'rgba(0, 0, 0, 0.26)';
     ctx.beginPath();
-    ctx.ellipse(0, 20, 16, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 20 * scaleFactor, 16 * scaleFactor, 8 * scaleFactor, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw Character Sprite (with horizontal flip when applicable)
@@ -5100,16 +5108,16 @@ class PedestrianGame {
       if (flipX) {
         ctx.save();
         ctx.scale(-1, 1);
-        ctx.drawImage(currentSprite, -charW / 2, -charH / 2 - 4, charW, charH);
+        ctx.drawImage(currentSprite, -charW / 2, -charH / 2 - (4 * scaleFactor), charW, charH);
         ctx.restore();
       } else {
-        ctx.drawImage(currentSprite, -charW / 2, -charH / 2 - 4, charW, charH);
+        ctx.drawImage(currentSprite, -charW / 2, -charH / 2 - (4 * scaleFactor), charW, charH);
       }
     } else {
       // Fallback while loading
       ctx.fillStyle = this.selectedChar === 'boy' ? '#1e88e5' : '#e91e63';
       ctx.beginPath();
-      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.arc(0, 0, 16 * scaleFactor, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -5137,7 +5145,7 @@ class PedestrianGame {
     if (this.hasGroceries && this.storeBagImage && this.storeBagImage.isLoaded) {
       ctx.save();
       const bagBob = this.player.isWalking ? Math.sin(this.player.walkAnimFrame * 2) * 2.5 : 0;
-      ctx.drawImage(this.storeBagImage, 10, -8 + bagBob, 28, 28);
+      ctx.drawImage(this.storeBagImage, 10 * scaleFactor, (-8 + bagBob) * scaleFactor, 28 * scaleFactor, 28 * scaleFactor);
       ctx.restore();
     }
 
@@ -5394,7 +5402,7 @@ class PedestrianGame {
   }
 
   isStorePositionBlocked(x, y) {
-    const r = 16;
+    const r = 18;
     // Store outer walls
     if (x - r < 55 || x + r > 965) return true;
     if (y - r < 120) return true;
@@ -5432,7 +5440,7 @@ class PedestrianGame {
   getNearbyStoreItem() {
     if (!this.storeItems) return null;
     let closest = null;
-    let closestDist = 78;
+    let closestDist = 92;
     for (const item of this.storeItems) {
       if (item.collected) continue;
       const dist = Math.hypot(this.player.x - item.shelfX, this.player.y - item.shelfY);
@@ -5445,8 +5453,8 @@ class PedestrianGame {
   }
 
   isNearCashier() {
-    return Math.hypot(this.player.x - 755, this.player.y - 850) < 100 ||
-           (this.player.x >= 705 && this.player.x <= 800 && this.player.y >= 780 && this.player.y <= 920);
+    return Math.hypot(this.player.x - 755, this.player.y - 850) < 125 ||
+           (this.player.x >= 690 && this.player.x <= 825 && this.player.y >= 760 && this.player.y <= 930);
   }
 
   collectStoreItem(item) {
@@ -5572,6 +5580,9 @@ class PedestrianGame {
     const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
     const trayEl = document.getElementById('cash-tray-contents');
+    const cashierSpeechEl = document.getElementById('cashier-speech-msg');
+    const progressFillEl = document.getElementById('payment-progress-fill');
+    const progressPctEl = document.getElementById('payment-progress-pct');
 
     if (stageScan) stageScan.classList.add('hidden');
     if (stagePay) stagePay.classList.remove('hidden');
@@ -5592,6 +5603,93 @@ class PedestrianGame {
     if (trayEl) {
       trayEl.innerHTML = '<span class="tray-placeholder">No cash inserted yet. Drag or click money below!</span>';
     }
+
+    if (progressFillEl) {
+      progressFillEl.style.width = '0%';
+      progressFillEl.classList.remove('goal-reached');
+    }
+    if (progressPctEl) {
+      progressPctEl.textContent = '0%';
+    }
+    if (cashierSpeechEl) {
+      cashierSpeechEl.textContent = `"Hi friend! Total is $${this.checkoutTotalDue.toFixed(2)}. Drag or click bills & coins to pay!"`;
+    }
+    this.clearCashierHintHighlights();
+  }
+
+  spawnFloatingCashParticle(amount, type, label) {
+    const wrapper = document.querySelector('.register-drop-zone-wrapper');
+    if (!wrapper) return;
+
+    const particle = document.createElement('div');
+    particle.className = `floating-cash-particle ${type === 'bill' ? 'bill' : 'coin'}`;
+    const txt = type === 'bill' ? `+$${amount.toFixed(0)}.00` : `+${label}`;
+    particle.textContent = txt;
+
+    // Slight random horizontal jitter for playful scatter effect
+    const randomOffset = (Math.random() - 0.5) * 60;
+    particle.style.left = `calc(50% + ${randomOffset}px)`;
+    particle.style.top = '14px';
+
+    wrapper.appendChild(particle);
+    setTimeout(() => {
+      if (particle.parentNode) particle.remove();
+    }, 1000);
+  }
+
+  clearCashierHintHighlights() {
+    document.querySelectorAll('.hint-highlight').forEach(el => el.classList.remove('hint-highlight'));
+  }
+
+  handleCashierHint() {
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.001) return;
+    this.clearCashierHintHighlights();
+
+    const remaining = Math.round((this.checkoutTotalDue - this.checkoutPaidSoFar) * 100) / 100;
+    let targetId = '';
+    let targetName = '';
+    let tip = '';
+
+    if (remaining >= 5.00) {
+      targetId = 'btn-pay-five';
+      targetName = '$5 Bill';
+      tip = `"Try putting in a $5 bill! It's our biggest bill and pays a big chunk!"`;
+    } else if (remaining >= 1.00) {
+      targetId = 'btn-pay-one';
+      targetName = '$1 Bill';
+      tip = `"A $1 bill is just right! Try tapping or dragging the $1 bill!"`;
+    } else if (remaining >= 0.25) {
+      targetId = 'btn-pay-quarter';
+      targetName = '25¢ Quarter';
+      tip = `"A 25¢ Quarter will help a lot! Tap the shiny quarter!"`;
+    } else if (remaining >= 0.10) {
+      targetId = 'btn-pay-dime';
+      targetName = '10¢ Dime';
+      tip = `"Try adding a 10¢ Dime! Small coin, big value!"`;
+    } else if (remaining >= 0.05) {
+      targetId = 'btn-pay-nickel';
+      targetName = '5¢ Nickel';
+      tip = `"Try a 5¢ Nickel next! You're super close!"`;
+    } else {
+      targetId = 'btn-pay-penny';
+      targetName = '1¢ Penny';
+      tip = `"Just a 1¢ Penny will finish it off! You can do it!"`;
+    }
+
+    const cashierSpeechEl = document.getElementById('cashier-speech-msg');
+    if (cashierSpeechEl) {
+      cashierSpeechEl.textContent = `💡 Hint: ${tip}`;
+    }
+
+    const targetEl = document.getElementById(targetId);
+    if (targetEl) {
+      targetEl.classList.add('hint-highlight');
+      setTimeout(() => {
+        targetEl.classList.remove('hint-highlight');
+      }, 3500);
+    }
+
+    sfx.menuCursor();
   }
 
   handleCheckoutMoneyInput(amount, type = 'coin', label = '') {
@@ -5606,6 +5704,9 @@ class PedestrianGame {
     const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
     const trayEl = document.getElementById('cash-tray-contents');
+    const cashierSpeechEl = document.getElementById('cashier-speech-msg');
+    const progressFillEl = document.getElementById('payment-progress-fill');
+    const progressPctEl = document.getElementById('payment-progress-pct');
 
     if (paidEl) paidEl.textContent = `$${this.checkoutPaidSoFar.toFixed(2)}`;
 
@@ -5616,6 +5717,23 @@ class PedestrianGame {
     } else {
       sfx.coinClink();
     }
+
+    // Spawn floating cash particle
+    this.spawnFloatingCashParticle(amount, type, label);
+
+    // Update Progress Bar
+    const pct = Math.min(100, Math.round((this.checkoutPaidSoFar / this.checkoutTotalDue) * 100));
+    if (progressFillEl) {
+      progressFillEl.style.width = `${pct}%`;
+      if (pct >= 100) progressFillEl.classList.add('goal-reached');
+      else progressFillEl.classList.remove('goal-reached');
+    }
+    if (progressPctEl) {
+      progressPctEl.textContent = `${pct}%`;
+    }
+
+    // Clear any active hint highlights since money was added
+    this.clearCashierHintHighlights();
 
     // Add visual token to cash tray
     if (trayEl) {
@@ -5669,6 +5787,14 @@ class PedestrianGame {
         }
       }
 
+      if (cashierSpeechEl) {
+        if (change > 0.005) {
+          cashierSpeechEl.textContent = `"Woohoo! Paid in full! Here is $${change.toFixed(2)} in change for you! 🪙"`;
+        } else {
+          cashierSpeechEl.textContent = `"Superstar! Exact change! Great math skills! 🎉"`;
+        }
+      }
+
       sfx.cashRegister();
       setTimeout(() => {
         sfx.fanfare();
@@ -5684,6 +5810,16 @@ class PedestrianGame {
       if (statusEl) {
         statusEl.textContent = `Remaining due: $${remaining.toFixed(2)} (Deposit more cash!) 💵`;
       }
+      if (cashierSpeechEl) {
+        const addedLabel = type === 'bill' ? `$${amount.toFixed(0)} bill` : `${label} coin`;
+        const cheers = [
+          `"Great job! Added ${addedLabel}! Only $${remaining.toFixed(2)} left!"`,
+          `"Nice counting! +${addedLabel}! You're almost there!"`,
+          `"Keep going! Just $${remaining.toFixed(2)} remaining to complete payment!"`,
+          `"Awesome! Added ${addedLabel} into the tray!"`
+        ];
+        cashierSpeechEl.textContent = cheers[Math.floor(Math.random() * cheers.length)];
+      }
     }
   }
 
@@ -5697,6 +5833,9 @@ class PedestrianGame {
     const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
     const trayEl = document.getElementById('cash-tray-contents');
+    const cashierSpeechEl = document.getElementById('cashier-speech-msg');
+    const progressFillEl = document.getElementById('payment-progress-fill');
+    const progressPctEl = document.getElementById('payment-progress-pct');
 
     if (paidEl) paidEl.textContent = '$0.00';
     if (balanceLabelEl) balanceLabelEl.textContent = 'REMAINING DUE:';
@@ -5708,6 +5847,17 @@ class PedestrianGame {
     if (trayEl) {
       trayEl.innerHTML = '<span class="tray-placeholder">No cash inserted yet. Drag or click money below!</span>';
     }
+    if (progressFillEl) {
+      progressFillEl.style.width = '0%';
+      progressFillEl.classList.remove('goal-reached');
+    }
+    if (progressPctEl) {
+      progressPctEl.textContent = '0%';
+    }
+    if (cashierSpeechEl) {
+      cashierSpeechEl.textContent = `"No problem! Let's count from the start together! 💵"`;
+    }
+    this.clearCashierHintHighlights();
     sfx.menuCursor();
   }
 
@@ -6068,7 +6218,7 @@ class PedestrianGame {
       const dist = Math.hypot(worldX - item.shelfX, worldY - item.shelfY);
       if (dist < 40) {
         const playerDist = Math.hypot(this.player.x - item.shelfX, this.player.y - item.shelfY);
-        if (playerDist < 95) {
+        if (playerDist < 120) {
           this.collectStoreItem(item);
           return true;
         }

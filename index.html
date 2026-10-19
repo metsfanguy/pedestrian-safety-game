@@ -293,6 +293,21 @@
 
         <!-- Stage 2: Cash-Only Register Payment (Bills & American Coins) -->
         <div id="checkout-stage-pay" class="checkout-stage hidden">
+          <!-- Cashier Buddy Mascot & Hint -->
+          <div class="cashier-buddy-card">
+            <div class="cashier-buddy-avatar">🧑‍🍳</div>
+            <div class="cashier-buddy-content">
+              <div class="cashier-buddy-header">
+                <span class="cashier-buddy-name">Cashier Sam</span>
+                <span class="cashier-buddy-badge">Helper</span>
+              </div>
+              <div id="cashier-speech-msg" class="cashier-speech-msg">"Hi friend! Tap or drag money into the tray to pay!"</div>
+            </div>
+            <button id="btn-cashier-hint" class="cashier-hint-btn" type="button" title="Ask Cashier Sam for a hint!">
+              💡 Hint
+            </button>
+          </div>
+
           <!-- Register Digital Display -->
           <div class="register-display-screen">
             <div class="register-screen-row">
@@ -307,6 +322,18 @@
               <span class="screen-label" id="register-balance-label">REMAINING DUE:</span>
               <span class="screen-val balance-val" id="register-balance-val">$0.00</span>
             </div>
+
+            <!-- Visual Payment Goal Progress Bar -->
+            <div class="payment-progress-box">
+              <div class="payment-progress-header">
+                <span class="progress-title">🎯 Payment Goal:</span>
+                <span id="payment-progress-pct" class="progress-pct">0%</span>
+              </div>
+              <div class="payment-progress-track">
+                <div id="payment-progress-fill" class="payment-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
             <div id="register-status-msg" class="register-status-msg">
               💵 Cash only! Drag bills & coins to the tray or click to pay!
             </div>

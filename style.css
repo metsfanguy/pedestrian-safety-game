@@ -2256,7 +2256,217 @@ body, html {
   font-size: 1rem;
 }
 
-/* Stage 2: Payment Screen */
+/* Cashier Buddy Mascot Card */
+.cashier-buddy-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.2);
+}
+
+.cashier-buddy-avatar {
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  flex-shrink: 0;
+  animation: bounceAvatar 2.2s ease-in-out infinite;
+}
+
+@keyframes bounceAvatar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px) scale(1.06); }
+}
+
+.cashier-buddy-content {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.cashier-buddy-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.cashier-buddy-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #78350f;
+  letter-spacing: 0.3px;
+}
+
+.cashier-buddy-badge {
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.cashier-speech-msg {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #92400e;
+  line-height: 1.3;
+}
+
+.cashier-hint-btn {
+  background: #ffffff;
+  border: 2px solid #f59e0b;
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 6px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.cashier-hint-btn:hover {
+  background: #fffbeb;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
+}
+
+.cashier-hint-btn:active {
+  transform: scale(0.96);
+}
+
+/* Payment Goal Progress Bar */
+.payment-progress-box {
+  margin: 6px 0 3px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.payment-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+.progress-title {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
+.progress-pct {
+  color: #38bdf8;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+}
+
+.payment-progress-track {
+  width: 100%;
+  height: 12px;
+  background: #0f172a;
+  border-radius: 999px;
+  border: 1.5px solid #334155;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.payment-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #38bdf8 0%, #22c55e 100%);
+  border-radius: 999px;
+  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+}
+
+.payment-progress-fill.goal-reached {
+  background: linear-gradient(90deg, #22c55e 0%, #eab308 100%);
+  animation: pulseGoal 1s infinite alternate ease-in-out;
+}
+
+@keyframes pulseGoal {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.25) drop-shadow(0 0 8px #eab308); }
+}
+
+/* Hint Highlighting for recommended coin or bill */
+@keyframes hintWiggle {
+  0% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
+  25% { transform: scale(1.12) rotate(-3deg); box-shadow: 0 0 0 5px #facc15, 0 10px 20px rgba(234, 179, 8, 0.6); }
+  50% { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
+  75% { transform: scale(1.12) rotate(-2deg); box-shadow: 0 0 0 5px #facc15, 0 10px 20px rgba(234, 179, 8, 0.6); }
+  100% { transform: scale(1.08) rotate(0deg); box-shadow: 0 0 0 4px #eab308, 0 8px 16px rgba(234, 179, 8, 0.5); }
+}
+
+.hint-highlight {
+  animation: hintWiggle 0.6s infinite ease-in-out !important;
+  z-index: 10;
+  border-radius: 10px;
+}
+
+/* Floating Cash Particle Badge */
+.floating-cash-particle {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border-radius: 999px;
+  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  animation: floatUpFade 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 999;
+}
+
+.floating-cash-particle.bill {
+  background: #15803d;
+  color: #ffffff;
+  border: 2px solid #86efac;
+}
+
+.floating-cash-particle.coin {
+  background: #d97706;
+  color: #ffffff;
+  border: 2px solid #fde047;
+}
+
+@keyframes floatUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0px) scale(1.14);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-24px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-44px) scale(0.85);
+  }
+}
+
 /* Stage 2: Payment Screen */
 .register-display-screen {
   background: #0f172a;
@@ -2321,6 +2531,7 @@ body, html {
 /* Interactive Cash Register Drop Zone Tray */
 .register-drop-zone-wrapper {
   margin-bottom: 8px;
+  position: relative;
 }
 
 .cash-drop-zone {
