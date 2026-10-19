@@ -2247,16 +2247,18 @@ body, html {
 }
 
 /* Stage 2: Payment Screen */
+/* Stage 2: Payment Screen */
 .register-display-screen {
   background: #0f172a;
   border: 3px solid #334155;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   color: #f8fafc;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  margin-bottom: 8px;
 }
 
 .register-screen-row {
@@ -2266,21 +2268,34 @@ body, html {
 }
 
 .screen-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #94a3b8;
 }
 
 .screen-val.due-val {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: #4ade80;
+  font-family: 'Press Start 2P', monospace;
 }
 
 .screen-val.paid-val {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #38bdf8;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.screen-val.balance-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fbbf24;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.screen-val.balance-val.change-green {
+  color: #4ade80;
 }
 
 .register-status-msg {
@@ -2290,26 +2305,173 @@ body, html {
   margin-top: 4px;
   border-top: 1px dashed #334155;
   padding-top: 4px;
+  min-height: 20px;
 }
 
-.money-grid {
+/* Interactive Cash Register Drop Zone Tray */
+.register-drop-zone-wrapper {
+  margin-bottom: 8px;
+}
+
+.cash-drop-zone {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2.5px dashed #475569;
+  border-radius: 12px;
+  padding: 8px 10px;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.cash-drop-zone.drag-over,
+.cash-drop-zone.drop-active {
+  border-color: #22c55e;
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+  transform: scale(1.02);
+}
+
+.drop-zone-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-opening {
+  display: inline-block;
+  width: 24px;
+  height: 4px;
+  background: #334155;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.slot-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.3px;
+}
+
+.cash-tray-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 28px;
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+.tray-placeholder {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.tray-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+.tray-token.token-bill {
+  background: #dcfce7;
+  border: 1.5px solid #16a34a;
+  color: #15803d;
+}
+
+.tray-token.token-coin {
+  background: #fef3c7;
+  border: 1.5px solid #d97706;
+  color: #92400e;
+  border-radius: 50px;
+  padding: 2px 6px;
+}
+
+.cash-tray-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 3px;
+}
+
+.clear-cash-btn {
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.clear-cash-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+/* Cash & Coins Wallet Drawer */
+.currency-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.currency-group-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #475569;
+  text-align: left;
+  margin: 3px 0 2px 2px;
+  letter-spacing: 0.4px;
+}
+
+.currency-row {
   display: grid;
+  gap: 8px;
+}
+
+.bills-row {
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+}
+
+.coins-row {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 
 .money-btn {
   background: #f8fafc;
   border: 2px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 10px 8px;
-  cursor: pointer;
+  border-radius: 12px;
+  padding: 8px 6px;
+  cursor: grab;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   transition: all 0.15s ease;
   font-family: inherit;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .money-btn:hover {
@@ -2318,39 +2480,124 @@ body, html {
 }
 
 .money-btn:active {
-  transform: scale(0.95);
+  cursor: grabbing;
+  transform: scale(0.96);
 }
 
-.money-emoji {
-  font-size: 1.6rem;
-  line-height: 1;
+.money-btn.dragging {
+  opacity: 0.45;
+  transform: scale(0.92);
 }
 
-.money-title {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.money-sub {
-  font-size: 0.68rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
+/* Paper Bills Art */
 .bill-btn {
   background: #f0fdf4;
   border-color: #86efac;
 }
 
+.bill-art {
+  width: 100%;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border: 1.8px solid #16a34a;
+  border-radius: 6px;
+  padding: 6px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px #86efac;
+}
+
+.bill-corner {
+  font-size: 0.65rem;
+  font-family: 'Press Start 2P', monospace;
+  color: #15803d;
+}
+
+.bill-center {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.bill-five .bill-art {
+  background: linear-gradient(135deg, #ccfbf1 0%, #a7f3d0 100%);
+  border-color: #0d9488;
+}
+
+.bill-five .bill-corner {
+  color: #0f766e;
+}
+
+/* Coins Art */
 .coin-btn {
   background: #fffbeb;
   border-color: #fde68a;
+  padding: 6px 3px;
 }
 
-.card-btn {
-  background: #eff6ff;
-  border-color: #93c5fd;
+.coin-disc {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  font-weight: 800;
+  user-select: none;
+}
+
+/* Quarter: Largest Silver Coin (25¢) */
+.coin-disc-quarter {
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5e1 55%, #94a3b8 100%);
+  border: 2px solid #64748b;
+  color: #1e293b;
+  font-size: 0.82rem;
+}
+
+/* Dime: Smallest Silver Coin (10¢) */
+.coin-disc-dime {
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 60%, #cbd5e1 100%);
+  border: 1.8px solid #94a3b8;
+  color: #0f172a;
+  font-size: 0.68rem;
+}
+
+/* Nickel: Medium Thick Silver Coin (5¢) */
+.coin-disc-nickel {
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle at 35% 35%, #f8fafc 0%, #cbd5e1 60%, #94a3b8 100%);
+  border: 2.2px solid #64748b;
+  color: #1e293b;
+  font-size: 0.78rem;
+}
+
+/* Penny: Copper Bronze Coin (1¢) */
+.coin-disc-penny {
+  width: 36px;
+  height: 36px;
+  background: radial-gradient(circle at 35% 35%, #fbbf24 0%, #d97706 50%, #92400e 100%);
+  border: 2px solid #78350f;
+  color: #ffffff;
+  text-shadow: 0 1px 2px #451a03;
+  font-size: 0.74rem;
+}
+
+.coin-name {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-top: 1px;
+}
+
+.money-sub {
+  font-size: 0.62rem;
+  color: #64748b;
+  font-weight: 600;
 }
 
 /* Stage 3: Bag Packaging */

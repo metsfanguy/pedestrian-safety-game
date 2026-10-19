@@ -291,50 +291,119 @@
           </div>
         </div>
 
-        <!-- Stage 2: Payment (Bills, Coins, or Tap Card) -->
+        <!-- Stage 2: Cash-Only Register Payment (Bills & American Coins) -->
         <div id="checkout-stage-pay" class="checkout-stage hidden">
+          <!-- Register Digital Display -->
           <div class="register-display-screen">
             <div class="register-screen-row">
               <span class="screen-label">TOTAL DUE:</span>
-              <span class="screen-val due-val" id="register-due-val">$5.00</span>
+              <span class="screen-val due-val" id="register-due-val">$0.00</span>
             </div>
             <div class="register-screen-row sub-row">
-              <span class="screen-label">PAID SO FAR:</span>
+              <span class="screen-label">CASH INSERTED:</span>
               <span class="screen-val paid-val" id="register-paid-val">$0.00</span>
             </div>
+            <div class="register-screen-row balance-row">
+              <span class="screen-label" id="register-balance-label">REMAINING DUE:</span>
+              <span class="screen-val balance-val" id="register-balance-val">$0.00</span>
+            </div>
             <div id="register-status-msg" class="register-status-msg">
-              Tap money or card below to pay!
+              💵 Cash only! Drag bills & coins to the tray or click to pay!
             </div>
           </div>
 
-          <div class="money-grid">
-            <button class="money-btn bill-btn" id="btn-pay-one" title="Pay with $1.00 Bill">
-              <span class="money-emoji">💵</span>
-              <span class="money-title">$1.00</span>
-              <span class="money-sub">Dollar Bill</span>
-            </button>
-            <button class="money-btn bill-btn" id="btn-pay-five" title="Pay with $5.00 Bill">
-              <span class="money-emoji">💵</span>
-              <span class="money-title">$5.00</span>
-              <span class="money-sub">Five Dollars</span>
-            </button>
-            <button class="money-btn coin-btn" id="btn-pay-quarter" title="Pay with 25¢ Quarter">
-              <span class="money-emoji">🪙</span>
-              <span class="money-title">25¢</span>
-              <span class="money-sub">Quarter</span>
-            </button>
-            <button class="money-btn card-btn" id="btn-pay-card" title="Tap Card to Pay Exact Amount">
-              <span class="money-emoji">💳</span>
-              <span class="money-title">TAP CARD</span>
-              <span class="money-sub">Pay Exact</span>
-            </button>
+          <!-- Interactive Cash Register Drop Zone / Coin Slot Tray -->
+          <div class="register-drop-zone-wrapper">
+            <div id="cash-drop-zone" class="cash-drop-zone" title="Drag bills or coins here to deposit!">
+              <div class="drop-zone-slot">
+                <span class="slot-opening"></span>
+                <span class="slot-label">📥 REGISTER CASH TRAY (DROP OR CLICK MONEY BELOW)</span>
+              </div>
+              <div id="cash-tray-contents" class="cash-tray-contents">
+                <span class="tray-placeholder">No cash inserted yet. Drag or click money below!</span>
+              </div>
+            </div>
+            <div class="cash-tray-actions">
+              <button id="btn-clear-cash" class="clear-cash-btn" title="Clear cash and recount from zero">
+                ↩️ Reset Cash / Recount
+              </button>
+            </div>
+          </div>
+
+          <!-- Cash & Coins Wallet (American Currency) -->
+          <div class="currency-drawer">
+            <!-- Paper Bills (Cash) -->
+            <div class="currency-group bills-group">
+              <div class="currency-group-title">💵 PAPER BILLS</div>
+              <div class="currency-row bills-row">
+                <button class="money-btn bill-btn" id="btn-pay-five" data-amount="5.00" data-type="bill" data-label="$5" draggable="true" title="Drag or click $5.00 Bill">
+                  <div class="bill-art bill-five">
+                    <span class="bill-corner top-left">$5</span>
+                    <span class="bill-center">💵 $5.00</span>
+                    <span class="bill-corner bottom-right">$5</span>
+                  </div>
+                  <span class="money-sub">Five Dollars</span>
+                </button>
+
+                <button class="money-btn bill-btn" id="btn-pay-one" data-amount="1.00" data-type="bill" data-label="$1" draggable="true" title="Drag or click $1.00 Bill">
+                  <div class="bill-art bill-one">
+                    <span class="bill-corner top-left">$1</span>
+                    <span class="bill-center">💵 $1.00</span>
+                    <span class="bill-corner bottom-right">$1</span>
+                  </div>
+                  <span class="money-sub">One Dollar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- American Coins -->
+            <div class="currency-group coins-group">
+              <div class="currency-group-title">🪙 AMERICAN COINS</div>
+              <div class="currency-row coins-row">
+                <!-- Quarter (25¢) -->
+                <button class="money-btn coin-btn coin-quarter" id="btn-pay-quarter" data-amount="0.25" data-type="coin" data-label="25¢" draggable="true" title="Drag or click 25¢ Quarter">
+                  <div class="coin-disc coin-disc-quarter">
+                    <span class="coin-text">25¢</span>
+                  </div>
+                  <span class="coin-name">Quarter</span>
+                  <span class="money-sub">25 Cents</span>
+                </button>
+
+                <!-- Dime (10¢) -->
+                <button class="money-btn coin-btn coin-dime" id="btn-pay-dime" data-amount="0.10" data-type="coin" data-label="10¢" draggable="true" title="Drag or click 10¢ Dime">
+                  <div class="coin-disc coin-disc-dime">
+                    <span class="coin-text">10¢</span>
+                  </div>
+                  <span class="coin-name">Dime</span>
+                  <span class="money-sub">10 Cents</span>
+                </button>
+
+                <!-- Nickel (5¢) -->
+                <button class="money-btn coin-btn coin-nickel" id="btn-pay-nickel" data-amount="0.05" data-type="coin" data-label="5¢" draggable="true" title="Drag or click 5¢ Nickel">
+                  <div class="coin-disc coin-disc-nickel">
+                    <span class="coin-text">5¢</span>
+                  </div>
+                  <span class="coin-name">Nickel</span>
+                  <span class="money-sub">5 Cents</span>
+                </button>
+
+                <!-- Penny (1¢) -->
+                <button class="money-btn coin-btn coin-penny" id="btn-pay-penny" data-amount="0.01" data-type="coin" data-label="1¢" draggable="true" title="Drag or click 1¢ Penny">
+                  <div class="coin-disc coin-disc-penny">
+                    <span class="coin-text">1¢</span>
+                  </div>
+                  <span class="coin-name">Penny</span>
+                  <span class="money-sub">1 Cent</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Stage 3: Bag Packaging & Return Home Mission -->
         <div id="checkout-stage-bag" class="checkout-stage hidden">
           <div class="paid-stamp-box">
-            <div class="paid-stamp animate-bounce">PAID IN FULL! 💳✨</div>
+            <div class="paid-stamp animate-bounce">PAID IN FULL! 💵✨</div>
           </div>
           <div class="bag-handoff-card">
             <img src="assets/shopping/items/57_grocery_bag.png" alt="Packed Grocery Bag" class="bag-handoff-img animate-bounce">

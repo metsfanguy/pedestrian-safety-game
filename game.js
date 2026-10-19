@@ -1490,18 +1490,141 @@ class PedestrianGame {
       });
     }
 
-    // Checkout Mini-Game Payment Buttons
-    const payOneBtn = document.getElementById('btn-pay-one');
-    if (payOneBtn) payOneBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(1.00));
-
+    // Checkout Mini-Game Payment Buttons (Bills & All American Coins)
     const payFiveBtn = document.getElementById('btn-pay-five');
-    if (payFiveBtn) payFiveBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(5.00));
+    if (payFiveBtn) payFiveBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(5.00, 'bill', '$5'));
+
+    const payOneBtn = document.getElementById('btn-pay-one');
+    if (payOneBtn) payOneBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(1.00, 'bill', '$1'));
 
     const payQuarterBtn = document.getElementById('btn-pay-quarter');
-    if (payQuarterBtn) payQuarterBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.25));
+    if (payQuarterBtn) payQuarterBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.25, 'coin', '25¢'));
 
-    const payCardBtn = document.getElementById('btn-pay-card');
-    if (payCardBtn) payCardBtn.addEventListener('click', () => this.handleCheckoutCardTap());
+    const payDimeBtn = document.getElementById('btn-pay-dime');
+    if (payDimeBtn) payDimeBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.10, 'coin', '10¢'));
+
+    const payNickelBtn = document.getElementById('btn-pay-nickel');
+    if (payNickelBtn) payNickelBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.05, 'coin', '5¢'));
+
+    const payPennyBtn = document.getElementById('btn-pay-penny');
+    if (payPennyBtn) payPennyBtn.addEventListener('click', () => this.handleCheckoutMoneyInput(0.01, 'coin', '1¢'));
+
+    // Clear / Recount Cash Button
+    const clearCashBtn = document.getElementById('btn-clear-cash');
+    if (clearCashBtn) {
+      clearCashBtn.addEventListener('click', () => this.resetCheckoutCash());
+    }
+
+    // Drag and Drop support onto Cash Register Tray
+    const dropZone = document.getElementById('cash-drop-zone');
+    const currencyButtons = document.querySelectorAll('.currency-drawer .money-btn');
+
+    currencyButtons.forEach(btn => {
+      btn.addEventListener('dragstart', (e) => {
+        btn.classList.add('dragging');
+        const data = {
+          amount: parseFloat(btn.dataset.amount),
+          type: btn.dataset.type || 'coin',
+          label: btn.dataset.label || ''
+        };
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+
+      btn.addEventListener('dragend', () => {
+        btn.classList.remove('dragging');
+      });
+
+      // Mobile Touch Dragging Support
+      let touchClone = null;
+      btn.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        const touch = e.touches[0];
+        btn.classList.add('dragging');
+        touchClone = btn.cloneNode(true);
+        touchClone.style.position = 'fixed';
+        touchClone.style.zIndex = '99999';
+        touchClone.style.pointerEvents = 'none';
+        touchClone.style.opacity = '0.85';
+        touchClone.style.transform = 'scale(0.9)';
+        touchClone.style.left = `${touch.clientX - 35}px`;
+        touchClone.style.top = `${touch.clientY - 35}px`;
+        document.body.appendChild(touchClone);
+      }, { passive: true });
+
+      btn.addEventListener('touchmove', (e) => {
+        if (!touchClone) return;
+        const touch = e.touches[0];
+        touchClone.style.left = `${touch.clientX - 35}px`;
+        touchClone.style.top = `${touch.clientY - 35}px`;
+        if (dropZone) {
+          const rect = dropZone.getBoundingClientRect();
+          if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+              touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+            dropZone.classList.add('drag-over');
+          } else {
+            dropZone.classList.remove('drag-over');
+          }
+        }
+      }, { passive: true });
+
+      btn.addEventListener('touchend', () => {
+        btn.classList.remove('dragging');
+        if (touchClone) {
+          touchClone.remove();
+          touchClone = null;
+        }
+        if (dropZone) {
+          const wasOver = dropZone.classList.contains('drag-over');
+          dropZone.classList.remove('drag-over');
+          if (wasOver) {
+            const amount = parseFloat(btn.dataset.amount);
+            const type = btn.dataset.type || 'coin';
+            const label = btn.dataset.label || '';
+            this.handleCheckoutMoneyInput(amount, type, label);
+          }
+        }
+      });
+    });
+
+    if (dropZone) {
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+
+      dropZone.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+
+      dropZone.addEventListener('dragleave', (e) => {
+        dropZone.classList.remove('drag-over');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        try {
+          const raw = e.dataTransfer.getData('text/plain');
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (data && typeof data.amount === 'number') {
+              this.handleCheckoutMoneyInput(data.amount, data.type, data.label);
+            }
+          }
+        } catch (err) {
+          console.warn('Drop parse error:', err);
+        }
+      });
+
+      // Also clicking the drop zone gives audio feedback / reminder
+      dropZone.addEventListener('click', () => {
+        if (this.checkoutPaidSoFar < this.checkoutTotalDue - 0.001) {
+          sfx.menuCursor();
+        }
+      });
+    }
 
     // Button to start walking back home or complete shopping spree
     const btnTakeHome = document.getElementById('btn-take-groceries-home');
@@ -5173,12 +5296,31 @@ class PedestrianGame {
     this.player.onBridge = false;
     this.player.isPettingDog = false;
 
-    // Deep clone store catalog items so each session has fresh state
-    this.storeItems = this.getStoreCatalog().map(item => ({
-      ...item,
-      collected: false,
-      onList: false
-    }));
+    // Deep clone store catalog items with a reasonable randomized price for each trip!
+    // Ranges tailored to be reasonable and strictly under $10:
+    // Produce: $0.65 - $2.25
+    // Bakery & Snacks: $1.10 - $3.25
+    // Cooler / Dairy: $1.65 - $4.75
+    // Pantry / Canned: $1.25 - $3.95
+    // Household: $2.25 - $5.75
+    this.storeItems = this.getStoreCatalog().map(item => {
+      let min = 0.50, max = 2.50;
+      if (item.category === 'produce') { min = 0.65; max = 2.25; }
+      else if (item.category === 'bakery' || item.category === 'snacks') { min = 1.10; max = 3.25; }
+      else if (item.category === 'cooler') { min = 1.65; max = 4.75; }
+      else if (item.category === 'pantry' || item.category === 'canned') { min = 1.25; max = 3.95; }
+      else if (item.category === 'household') { min = 2.25; max = 5.75; }
+
+      // Generate random price rounded to 2 decimal places
+      const randomPrice = Math.round((min + Math.random() * (max - min)) * 100) / 100;
+
+      return {
+        ...item,
+        price: randomPrice,
+        collected: false,
+        onList: false
+      };
+    });
 
     // Choose 3 distinct items for the shopping list
     const produceList = this.storeItems.filter(i => i.category === 'produce');
@@ -5228,7 +5370,7 @@ class PedestrianGame {
 
     if (bannerEl) {
       if (collectedCount === this.shoppingList.length) {
-        bannerEl.textContent = '🎉 All items found! Go to the cash register to pay! 💳';
+        bannerEl.textContent = '🎉 All items found! Go to the cash register to pay! 💵';
         bannerEl.classList.add('goal-ready');
         bannerEl.classList.remove('hidden');
       } else {
@@ -5244,7 +5386,7 @@ class PedestrianGame {
       itemRow.className = `store-check-item ${target.collected ? 'collected' : ''}`;
       itemRow.innerHTML = `
         <img src="assets/shopping/items/${target.file}" alt="${target.name}" class="check-item-img">
-        <span class="check-item-name">${target.name}</span>
+        <span class="check-item-name">${target.name} <small class="check-item-price">($${target.price.toFixed(2)})</small></span>
         <span class="check-item-status">${target.collected ? '✅' : '⬜'}</span>
       `;
       listContainer.appendChild(itemRow);
@@ -5426,73 +5568,132 @@ class PedestrianGame {
     const stepBadge = document.getElementById('terminal-step-badge');
     const dueEl = document.getElementById('register-due-val');
     const paidEl = document.getElementById('register-paid-val');
+    const balanceLabelEl = document.getElementById('register-balance-label');
+    const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
+    const trayEl = document.getElementById('cash-tray-contents');
 
     if (stageScan) stageScan.classList.add('hidden');
     if (stagePay) stagePay.classList.remove('hidden');
-    if (stepBadge) stepBadge.textContent = 'STEP 2: PAYMENT 💳';
+    if (stepBadge) stepBadge.textContent = 'STEP 2: CASH PAYMENT 💵';
 
-    this.checkoutTotalDue = totalDue;
+    this.checkoutTotalDue = Math.round(totalDue * 100) / 100;
     this.checkoutPaidSoFar = 0;
+    this.checkoutHistory = [];
 
-    if (dueEl) dueEl.textContent = `$${totalDue.toFixed(2)}`;
+    if (dueEl) dueEl.textContent = `$${this.checkoutTotalDue.toFixed(2)}`;
     if (paidEl) paidEl.textContent = '$0.00';
-    if (statusEl) statusEl.textContent = 'Tap money or card below to pay!';
+    if (balanceLabelEl) balanceLabelEl.textContent = 'REMAINING DUE:';
+    if (balanceValEl) {
+      balanceValEl.textContent = `$${this.checkoutTotalDue.toFixed(2)}`;
+      balanceValEl.className = 'screen-val balance-val';
+    }
+    if (statusEl) statusEl.textContent = '💵 Cash only! Drag bills & coins to the tray or click to pay!';
+    if (trayEl) {
+      trayEl.innerHTML = '<span class="tray-placeholder">No cash inserted yet. Drag or click money below!</span>';
+    }
   }
 
-  handleCheckoutMoneyInput(amount) {
-    if (this.checkoutPaidSoFar >= this.checkoutTotalDue) return;
+  handleCheckoutMoneyInput(amount, type = 'coin', label = '') {
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.0001) return;
 
-    this.checkoutPaidSoFar += amount;
+    this.checkoutPaidSoFar = Math.round((this.checkoutPaidSoFar + amount) * 100) / 100;
+    this.checkoutHistory.push({ amount, type, label });
+
+    const dueEl = document.getElementById('register-due-val');
     const paidEl = document.getElementById('register-paid-val');
+    const balanceLabelEl = document.getElementById('register-balance-label');
+    const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
+    const trayEl = document.getElementById('cash-tray-contents');
 
     if (paidEl) paidEl.textContent = `$${this.checkoutPaidSoFar.toFixed(2)}`;
 
+    // Sound effect: Paper bill pulse tone vs Metallic coin clink
     if (amount >= 1.00) {
-      sfx.playTone(392, 'sine', 0.12, 0.15);
-      setTimeout(() => sfx.coinClink(), 100);
+      sfx.playRetroPulse(440, 0.08, 'triangle', 0.16);
+      setTimeout(() => sfx.coinClink(), 80);
     } else {
       sfx.coinClink();
     }
 
+    // Add visual token to cash tray
+    if (trayEl) {
+      const placeholder = trayEl.querySelector('.tray-placeholder');
+      if (placeholder) placeholder.remove();
+
+      const token = document.createElement('span');
+      token.className = `tray-token animate-pop ${type === 'bill' ? 'token-bill' : 'token-coin'}`;
+      token.textContent = label || (amount >= 1.0 ? `$${amount.toFixed(0)}` : `${Math.round(amount * 100)}¢`);
+      trayEl.appendChild(token);
+      trayEl.scrollTop = trayEl.scrollHeight;
+    }
+
+    // Visual drop zone bump
+    const dropZone = document.getElementById('cash-drop-zone');
+    if (dropZone) {
+      dropZone.classList.add('drop-active');
+      setTimeout(() => dropZone.classList.remove('drop-active'), 220);
+    }
+
+    // Check payment completion
     if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.001) {
-      const change = Math.max(0, this.checkoutPaidSoFar - this.checkoutTotalDue);
+      const change = Math.round(Math.max(0, this.checkoutPaidSoFar - this.checkoutTotalDue) * 100) / 100;
+
+      if (balanceLabelEl) balanceLabelEl.textContent = 'CHANGE DUE:';
+      if (balanceValEl) {
+        balanceValEl.textContent = `+$${change.toFixed(2)}`;
+        balanceValEl.className = 'screen-val balance-val change-green';
+      }
+
       if (statusEl) {
-        if (change > 0.01) {
-          statusEl.textContent = `PAID! 🪙 Change: $${change.toFixed(2)}! Packaging groceries...`;
+        if (change > 0.005) {
+          statusEl.innerHTML = `🎉 <strong>PAID IN FULL!</strong> Cashier gives you <strong>$${change.toFixed(2)}</strong> in change! 🪙`;
         } else {
-          statusEl.textContent = 'PAID IN FULL! Exact change! ✨ Packaging groceries...';
+          statusEl.innerHTML = '🎉 <strong>PAID IN FULL!</strong> Exact change! ✨ Packaging groceries...';
         }
       }
+
       sfx.cashRegister();
       setTimeout(() => {
         sfx.fanfare();
         this.showCheckoutBagStage();
-      }, 750);
+      }, 1400);
     } else {
-      const remaining = this.checkoutTotalDue - this.checkoutPaidSoFar;
+      const remaining = Math.round((this.checkoutTotalDue - this.checkoutPaidSoFar) * 100) / 100;
+      if (balanceLabelEl) balanceLabelEl.textContent = 'REMAINING DUE:';
+      if (balanceValEl) {
+        balanceValEl.textContent = `$${remaining.toFixed(2)}`;
+        balanceValEl.className = 'screen-val balance-val';
+      }
       if (statusEl) {
-        statusEl.textContent = `Remaining due: $${remaining.toFixed(2)} 💵`;
+        statusEl.textContent = `Remaining due: $${remaining.toFixed(2)} (Deposit more cash!) 💵`;
       }
     }
   }
 
-  handleCheckoutCardTap() {
-    if (this.checkoutPaidSoFar >= this.checkoutTotalDue) return;
-    this.checkoutPaidSoFar = this.checkoutTotalDue;
+  resetCheckoutCash() {
+    if (this.checkoutPaidSoFar >= this.checkoutTotalDue - 0.001) return; // Already paid in full
+    this.checkoutPaidSoFar = 0;
+    this.checkoutHistory = [];
+
     const paidEl = document.getElementById('register-paid-val');
+    const balanceLabelEl = document.getElementById('register-balance-label');
+    const balanceValEl = document.getElementById('register-balance-val');
     const statusEl = document.getElementById('register-status-msg');
+    const trayEl = document.getElementById('cash-tray-contents');
 
-    if (paidEl) paidEl.textContent = `$${this.checkoutPaidSoFar.toFixed(2)}`;
-    if (statusEl) statusEl.textContent = '💳 CARD APPROVED! Exact payment! Packaging groceries...';
-
-    sfx.walkSignalChirp();
-    setTimeout(() => {
-      sfx.cashRegister();
-      sfx.fanfare();
-      this.showCheckoutBagStage();
-    }, 700);
+    if (paidEl) paidEl.textContent = '$0.00';
+    if (balanceLabelEl) balanceLabelEl.textContent = 'REMAINING DUE:';
+    if (balanceValEl) {
+      balanceValEl.textContent = `$${(this.checkoutTotalDue || 0).toFixed(2)}`;
+      balanceValEl.className = 'screen-val balance-val';
+    }
+    if (statusEl) statusEl.textContent = '💵 Cash cleared! Drag bills & coins or click to pay!';
+    if (trayEl) {
+      trayEl.innerHTML = '<span class="tray-placeholder">No cash inserted yet. Drag or click money below!</span>';
+    }
+    sfx.menuCursor();
   }
 
   showCheckoutBagStage() {
@@ -6037,7 +6238,7 @@ class PedestrianGame {
       ctx.font = 'bold 12px Fredoka, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('💳 PAY HERE', beaconX, beaconY - 12);
+      ctx.fillText('💵 PAY HERE', beaconX, beaconY - 12);
       ctx.restore();
     }
 
@@ -6049,14 +6250,14 @@ class PedestrianGame {
     if (nearbyItem) {
       const promptX = nearbyItem.shelfX;
       const promptY = nearbyItem.shelfY - 32;
-      const promptText = nearbyItem.onList ? `🧺 [SPACE] Take ${nearbyItem.name}` : `${nearbyItem.name} (Not on list)`;
+      const promptText = nearbyItem.onList ? `🧺 [SPACE] Take ${nearbyItem.name} ($${nearbyItem.price.toFixed(2)})` : `${nearbyItem.name} ($${nearbyItem.price.toFixed(2)})`;
       const bgColor = nearbyItem.onList ? '#15803d' : '#475569';
       this.drawSpeechBubble(ctx, promptX, promptY, promptText, bgColor);
     } else if (this.isNearCashier()) {
       const cashierX = 770;
       const cashierY = 810;
       if (remainingCount === 0) {
-        this.drawSpeechBubble(ctx, cashierX, cashierY, '💳 [SPACE] Checkout & Pay!', '#15803d');
+        this.drawSpeechBubble(ctx, cashierX, cashierY, '💵 [SPACE] Checkout & Pay (Cash)!', '#15803d');
       } else {
         this.drawSpeechBubble(ctx, cashierX, cashierY, `🛒 Still need ${remainingCount} items!`, '#e11d48');
       }
